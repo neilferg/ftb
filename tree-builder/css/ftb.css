@@ -1,0 +1,134 @@
+*
+{
+  box-sizing: border-box;
+}
+
+body
+{
+  background-color:wheat;
+}
+
+h1
+{
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:26pt;
+}
+
+h2
+{
+  font-family:Arial, Helvetica, sans-serif;
+  color:blue;
+}
+
+p
+{
+  margin-left:50px;
+}
+
+table
+{
+  border-collapse: collapse;
+}
+
+img
+{
+    border: 0;
+    vertical-align: text-top;
+}
+
+/* We want the iframe to occupy all of the remaining height
+   to maximise the area available to the photo viewer
+ */
+#child_iframe
+{
+    height: calc(100% - 76px);
+    width: 100%;
+    overflow: hidden; /*replacement for scrolling="no"*/
+    border: 0; 
+}
+
+.topnav
+{
+  overflow: hidden;
+  background-color: #485e49;
+}
+
+.topnav a
+{
+  float: left;
+  text-decoration: none;
+  padding: 14px 8px;
+  color: #eee;
+  text-align: center;
+  display: block;
+  border-right: 1px solid #bbb; 
+  font-size: 17px;
+}
+
+.topnav .search-container
+{
+  float: left;
+  border-right: 1px solid #bbb;
+}
+
+.topnav input[type=text]
+{
+  padding: 6px;
+  margin-left: 6px;
+  margin-top: 8px;
+  font-size: 17px;
+  border: none;
+  width: 140px;
+}
+
+.topnav .search-container button
+{
+  float: right;
+  margin-top: 8px;
+  margin-bottom: 20px;
+  margin-right: 16px;
+  background: #ddd;
+  border: none;
+  cursor: pointer;
+  padding-top: 4px;
+  padding-right: 4px;
+  padding-bottom: 5px;
+  padding-left: 4px;
+}
+
+.topnav a:hover
+{
+  background-color: #a2b3a1;
+}
+
+.topnav .search-container:hover
+{
+  background: #a2b3a1;
+}
+
+.topnav .search-container button:hover
+{
+  background: #ccc;
+}
+
+table.children {
+  width: 95%;
+  margin-left: 25px;
+  border-width: 0px;
+}
+
+td.children {
+  padding-top:1px;
+  padding-bottom:0px;
+  padding-right:8px;
+  padding-left:0px;
+}
+
+td.children-ra {
+  width: 1px;
+  text-align: right;
+  padding-top:1px;
+  padding-bottom:0px;
+  padding-right:8px;
+  padding-left:0px;
+}
