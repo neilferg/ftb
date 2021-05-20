@@ -2,8 +2,8 @@ import os
 import ntpath
 import re
 
-from osutils import islink, readlink, BCKf, TMPf, getLinkSuffix
-from osutils import stripKnownSuffixes, INTERNET_SCUT_SUFFIX, WINDOWS_SCUT_SUFFIX
+from osutils import BCKf, TMPf, getLinkSuffix
+from osutils import stripKnownSuffixes, INTERNET_SCUT_SUFFIX, WINDOWS_SCUT_SUFFIX, makelink_url, makelink_scut
   
 TREE_NODE = "tree"
 CLAN_RE = re.compile('[A-Z][A-Z]+') # at least two upper case
@@ -26,6 +26,16 @@ AUTOGEN_FILES = [ PERSON_IDX, PERSON_IDX_, BCKf+'*', TMPf+'*', CLANTREE+'.*', 's
 
 # Microsoft 'Mark of the web' - insert immediately before <html> tag
 MOTW = "<!-- saved from url=(0014)about:internet -->\n"
+
+
+def isPerson(dirPathSeg):
+    isP = dirPathSeg[0].isalpha() and dirPathSeg[0].isupper()
+    if len(dirPathSeg) > 1:
+        isP = isP and dirPathSeg[1].islower()
+    return isP
+
+def isClan(dirPathSeg):
+    return dirPathSeg.isupper()
 
 # If nodePattern is found, returns (head, tail)
 # If nodeInHead=True  <nodePattern> node is in head
@@ -82,16 +92,26 @@ def getTreeRoot(path = None, rootNode = TREE_NODE):
     
     return headtail[0]
 
-def tryRebaseLink(tgt, treeRoot, treeRootNode = TREE_NODE):
+def tryRebaseLink(tgt, treeRoot, validClans = None, treeRootNode = TREE_NODE):
+    # <tgt>, the link target could be absolute or relative. In both cases the
+    # rebased target will be always absolute.
+    # <validClans> if present is expected to be a list of valid clans which will
+    # be used to validate the clan node.
     headtail = trySplitPathAtNode(tgt, treeRootNode, nodeInHead=True)
+    
     if headtail is None: # look for the CLAN node instead
         headtail = trySplitPathAtNode(tgt, CLAN_RE, nodeInHead=False)
-
-    if headtail is not None:
+        if (headtail is not None) and (validClans is not None):
+            pth = headtail[1].split(os.sep)
+            clan = pth[0]
+            if not clan in validClans:
+                return None
+            
+    if headtail is None:
+        return None
+    else:
         # rebase: add new head (root) to the tail
         return os.path.join(treeRoot, headtail[1])
-    else:
-        return None
     
 SUFFIXES = [ INTERNET_SCUT_SUFFIX, WINDOWS_SCUT_SUFFIX ]
     
@@ -150,63 +170,32 @@ def makelink_withbck(newTgt, oldLnk, mklnk_fn, newLnkSuffix=None, dryrun=False):
         #os.remove(bckLnk)
         
         print("%s -> %s" % (newLink, newTgt))
+        
+def getLinkMaker(link=None): # filepath or 'url','scut','sym'
+    if link is None:
+        if os.name == 'nt':
+            return makelink_scut
+        else:
+            return os.symlink
+    elif link.endswith(INTERNET_SCUT_SUFFIX) or (link == 'url'):
+        return makelink_url
+    elif (os.name == 'nt') and ((link == 'scut') or link.endswith(WINDOWS_SCUT_SUFFIX)):
+        return makelink_scut
+    elif (os.name == 'posix') and ((link == 'sym') or os.path.islink(link)):
+        return os.symlink
+    else:
+        raise Exception("Unsupported link type '%s'" % (link))
 
-def extractPersonName(path):
+def extractPersonName(path, fullforename=False):
     headtail = trySplitPathAtNode(path, CLAN_RE, nodeInHead=False)
     if headtail is None:
         raise Exception("Couldn't find CLAN_RE node '%s' in path" % (path))
     
     path = headtail[1].split(os.sep)
-    return (path[0], path[-1]) # ('CLAN', 'Forename')
-
-
-class SpouseLink:
-    LINK_RE = re.compile(r"([hwp])([0-9]*?)\.\s+([a-zA-Z ]*)")
-    
-    def __init__(self):
-        self.path = None
-        self.forename = self.surname = None
-        self.relationship = None
-
-    @staticmethod
-    def find(d):
-        spouses = []
-        for f in os.listdir(d):
-            f_full = os.path.join(d, f)
-            
-            if not islink(f_full):
-                continue
-            
-            match = SpouseLink.LINK_RE.match(f)
-            if match is None:
-                continue
-
-            m = SpouseLink()
-            m.relationship = match.groups()[0]
-            num = match.groups()[1]
-            if num == '':
-                num = '1'
-            lclName = match.groups()[2].split()
-            m.forename = " ".join(lclName[0:-1])
-            m.surname = lclName[-1].upper()
-            m.path = SpouseLink.getPath(f_full)
-            
-            spouses.append( (num, m) )
-
-        spouses.sort(key=lambda m: m[0])
-        return [m[1] for m in spouses]
-            
-    @staticmethod
-    def getPath(p):
-        try:
-            tgt = readlink(p)
-        except:
-            print("Can't read spouse link %s" % (p))
-            tgt = NULL_LNK
-        if tgt.endswith(NULL_LNK):
-            tgt = None
-            
-        return tgt
-
-    def makeFakePath(self, root):
-        return os.path.join(root, self.surname, "_FAKE_", self.forename)
+    surname = path[0]
+    forename = path[-1]
+    if not fullforename:
+        forename = forename.split()
+        forename = forename[0]
+        
+    return (surname, forename)

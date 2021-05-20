@@ -5,7 +5,7 @@ import urllib
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
-from ft_people import Person, PersonFactory
+from ft_people import PersonFactory
 from ft_utils import MOTW, PERSON_IDX, PERSON_IDX_, FT_ROOT_subst_leader, FTB_ROOT_subst, TREE_ROOT_subst
 import ft_otherfiles
 from ft_treegraph import ClanTree
@@ -73,7 +73,7 @@ class MakeWeb:
     def makeClanTreegraphs(self):
         for c in self.pf.getClans():
             tb = ClanTree(c, self.pf)
-            tb.make()
+            tb.make(c)
 
     def makeIndividuals(self):
         personIndexTempl = os.path.join(THIS_DIR,'..','html','person_index_templ.htm')
@@ -153,25 +153,25 @@ class MakeWeb:
                 htmlText.append('</tr>')
 
     def personDeath(self, p, htmlText):
-       if p.deathVr is None:
-           return
+        if p.deathVr is None:
+            return
 
-       searchDoc = fwdslash(relpath(p.deathVr.getFile(), p.path))
-       url = '<a href="%s">Death</a>:' % (searchDoc)
-       htmlText.append('<tr><td style=" font-style: italic;">%s</td><td>' % (url))
+        searchDoc = fwdslash(relpath(p.deathVr.getFile(), p.path))
+        url = '<a href="%s">Death</a>:' % (searchDoc)
+        htmlText.append('<tr><td style=" font-style: italic;">%s</td><td>' % (url))
        
-       if p.deathVr.date is not None:
-           htmlText.append('%s ' % (p.deathVr.date))
-       if p.deathVr.age is not None:
-           htmlText.append('(age %s) ' % (p.deathVr.age))
-       if p.deathVr.where is not None:
-           htmlText.append('in %s' % (p.deathVr.where))
-       htmlText.append('</td>')
-       cert = p.deathVr.getCert()
-       if cert is not None:
-           url = '<a href="%s">certificate</a>' % (fwdslash(relpath(cert, p.path)))
-           htmlText.append('<td>%s</td>' % url)
-       htmlText.append('</tr>')
+        if p.deathVr.date is not None:
+            htmlText.append('%s ' % (p.deathVr.date))
+        if p.deathVr.age is not None:
+            htmlText.append('(age %s) ' % (p.deathVr.age))
+        if p.deathVr.where is not None:
+            htmlText.append('in %s' % (p.deathVr.where))
+        htmlText.append('</td>')
+        cert = p.deathVr.getCert()
+        if cert is not None:
+            url = '<a href="%s">certificate</a>' % (fwdslash(relpath(cert, p.path)))
+            htmlText.append('<td>%s</td>' % url)
+        htmlText.append('</tr>')
 
     def personMarriages(self, p, htmlText):
         if (p.marriageVrs is None):

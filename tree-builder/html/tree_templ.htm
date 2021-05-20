@@ -4,7 +4,8 @@
   <head>
     <meta content="text/html; charset=windows-1252"
       http-equiv="Content-Type">
-    <link rel="stylesheet" href="../../tree-builder/css/ftb.css" type="text/css">
+    <link rel="stylesheet" href="../../tree-builder/css/ftb.css"
+      type="text/css">
     <script type="text/javascript" src="../../tree-builder/js/jquery.js"></script>
     <script type="text/javascript" src="../../tree/searchRecs.js"></script>
     <script type="text/javascript" src="../../tree-builder/js/search.js"></script>
@@ -13,29 +14,20 @@
     <title>__TITLE__</title>
   </head>
   <body>
-    <div class="topnav">
-      <a href="../../../tree/index.html">
-        <img src="../../tree-builder/images/home.png">Home
-      </a>
-      <div class="search-container">
-        <input type="text" placeholder="Search..." id="search-entry"
-               title="Enter the person you wish to search for"
-               placeholder="Search..." onkeypress="doSearch(event)">
-        <button type="submit" onclick="doSearchBtn()">
-          <img src="../../tree-builder/images/iconfinder_magnifier_1814075.png">
-        </button>
-  </div>
-  <a href="../../../tree/help.htm">
-    <img src="../../tree-builder/images/blank_menu.png">Help
-  </a>
-</div>
-    <br>
-    <br>
-    <br>
+    <div class="topnav"> <a href="../../../tree/index.html"> <img
+          src="../../tree-builder/images/home.png">Home </a>
+      <div class="search-container"> <input placeholder="Search..."
+          id="search-entry" title="Enter the person you wish to search
+          for" onkeypress="doSearch(event)" type="text"> <button
+          type="submit" onclick="doSearchBtn()"> <img
+            src="../../tree-builder/images/iconfinder_magnifier_1814075.png">
+        </button> </div>
+      <a href="../../../tree/help.htm"> <img
+          src="../../tree-builder/images/blank_menu.png">Help </a> </div>
     <div id="docContent">
       <h1>__TITLE__</h1>
-      <div style="position: relative;" id="canvasOverlay">
-        <img src="tree.gif" usemap="#TREEMAP" alt="" id="relationships"
+      <div style="position: relative;" id="canvasOverlay"> <img
+          src="tree.gif" usemap="#TREEMAP" alt="" id="relationships"
           class="map" border="0" align="left"></div>
       <script src="../../tree-builder/js/treegraph_hilight.js" type="text/javascript"></script>
       <map id="TREEMAP" name="TREEMAP">

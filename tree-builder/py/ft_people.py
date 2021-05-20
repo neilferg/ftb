@@ -1,17 +1,8 @@
 import os.path
 from osutils import getFileVersion
-from ft_utils import SpouseLink, tryRebaseLink
+from ft_utils import tryRebaseLink, PRIVATE, isClan, isPerson
+from ft_bond import PartnerLink
 import ft_vital
-
-
-def isPerson(dirName):
-    isP = dirName[0].isalpha() and dirName[0].isupper()
-    if len(dirName) > 1:
-        isP = isP and dirName[1].islower()
-    return isP
-
-def isClan(dirName):
-    return dirName.isupper()
 
 
 ID_START = 1000
@@ -96,8 +87,8 @@ class PersonFactory:
             p.crossSearchMarriageVrs()
             
 class Person:
-    def __init__(self, id, path, peopleFact):
-        self.id = id
+    def __init__(self, _id, path, peopleFact):
+        self.id = _id
         self.path = os.path.abspath(path)
         self.peopleFact = peopleFact
         
@@ -216,7 +207,7 @@ class Person:
             return spouses
 
         # spouses are sorted 1, 2 ...
-        for sl in SpouseLink.find(self.path):
+        for sl in PartnerLink.find(self.path):
             sex = None
             if sl.relationship == 'h':
                 sex='F'

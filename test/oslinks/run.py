@@ -5,7 +5,7 @@ import sys, os
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(THIS_DIR, '../../tree-builder/py'))
 
-from osutils import makelink_scut, readlink, rm_rf
+from osutils import makelink_scut, readlink_f, rm_rf
 
 
 class Test1:
@@ -27,7 +27,7 @@ class Test1:
         
         makelink_scut(tgt, linkName)
         
-        print(readlink(linkName+'.lnk'))
+        print(readlink_f(linkName+'.lnk'))
            
     def run(self):
         try:

@@ -124,19 +124,6 @@ if os.name == 'nt':
             shell = wscriptShell[0]
         return shell
     
-    if 0: # Use the arch independent version
-        def readlink_scut(linkName):
-            shortcut = shell.CreateShortCut(os.path.normpath(linkName))
-            tgt = shortcut.Targetpath
-            
-            if os.path.exists(tgt):
-                try:
-                    tgt = win32api.GetLongPathName(tgt)
-                except pywintypes.error:
-                    pass
-                
-            return tgt
-    
     def makelink_scut(tgt, linkName):
         if not linkName.endswith(WINDOWS_SCUT_SUFFIX):
             raise Exception("linkName must have '%s' extension" % (WINDOWS_SCUT_SUFFIX))
@@ -284,7 +271,7 @@ def readlink_scut(linkName):
     
     raise Exception("Unable to retrieve target path from MS Shortcut: shortcut = %s" % (linkName))
 
-def readlink(linkName):
+def readlink_f(linkName): # resolve links and return absolute path
     '''Read link target. This returns an absolute path'''
     if linkName.endswith(INTERNET_SCUT_SUFFIX):
         return readlink_url(linkName) # always absolute
@@ -340,6 +327,31 @@ def _ln_file(srcFile, lnkFile):
         if os.path.exists(lnkFile):
             os.remove(lnkFile)        
     CreateHardLink(lnkFile, srcFile)
+    
+# n.b this won't work in the pydebugger
+try:
+    import msvcrt
+    getch = msvcrt.getch
+except:
+    import sys, tty, termios
+    def _unix_getch():
+        """Get a single character from stdin, Unix version"""
+
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())          # Raw read
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+    getch = _unix_getch
+    
+def oktodo(prompt):
+    print(prompt+" [Y/n]")
+    c = getch()
+    return c in ['y', 'Y', '\r']
 
 def getFileVersion(f): 
     if not os.path.exists(f):

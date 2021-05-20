@@ -3,9 +3,8 @@ import lxml.html
 import urllib
 from os.path import relpath
 import fnmatch
-from ft_people import isPerson
 from osutils import fwdslash, islink
-from ft_utils import PRIVATE
+from ft_utils import PRIVATE, isPerson
 
 
 VREC_HTML_FILES = [ 'birth_search.htm*', 'death_search.htm*', 'marriage*search.htm*',

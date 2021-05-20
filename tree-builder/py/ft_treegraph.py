@@ -7,7 +7,7 @@ import glob
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 from osutils import fwdslash, url2path, path2url
-from ft_utils import MOTW, FT_ROOT_subst_leader, FTB_ROOT_subst, TREE_ROOT_subst, CLANTREE
+from ft_utils import FT_ROOT_subst_leader, FTB_ROOT_subst, TREE_ROOT_subst, CLANTREE
 
 
 def findDotExe():
@@ -138,7 +138,7 @@ class TreeBuilder:
     def makeHtml(self, title, dotFile):
         d = os.path.dirname(dotFile)
         bn = os.path.basename(dotFile)
-        bn, ext = os.path.splitext(bn)
+        bn = os.path.splitext(bn)[0]
         
         # The bitmap file
         imageType = 'png'
@@ -205,7 +205,8 @@ class TreeBuilder:
         title = []
         for event in [self.personBirth, self.personMarriages, self.personDeath]:
             txt = event(p)
-            if len(txt) > 0: title.append(txt)
+            if len(txt) > 0: 
+                title.append(txt)
         return P.join(title)
     
     def personBirth(self, p):
@@ -213,7 +214,8 @@ class TreeBuilder:
         date = p.getBirthDate()
         if date is not None:
             text.append('BIRTH: %s' % date)
-            if p.birthVr.where is not None: text.append(' in %s' % (p.birthVr.where))
+            if (p.birthVr is not None) and (p.birthVr.where is not None):
+                text.append(' in %s' % (p.birthVr.where))
             text.append('.')
         return ''.join(text)
         
@@ -221,8 +223,10 @@ class TreeBuilder:
         text = []
         if (p.deathVr is not None) and (p.deathVr.date is not None):
             text.append('DEATH: %s' % p.deathVr.date)
-            if p.deathVr.age is not None: text.append(' (age %s)' % (p.deathVr.age))
-            if p.deathVr.where is not None: text.append(' in %s' % (p.deathVr.where))
+            if p.deathVr.age is not None:
+                text.append(' (age %s)' % (p.deathVr.age))
+            if p.deathVr.where is not None:
+                text.append(' in %s' % (p.deathVr.where))
             text.append('.')
         return ''.join(text)
 
@@ -234,17 +238,22 @@ class TreeBuilder:
 
             num = 1
             for s, mr in zip(spouses, p.marriageVrs):
-                if s.isPrivate(): continue
-                if num > 1: text.append(BR)
+                if s.isPrivate():
+                    continue
+                
+                if num > 1:
+                    text.append(BR)
             
                 if multipleMarriages:
                     text.append('MARRIAGE %d:' % (num) )
                 else:
                     text.append('MARRIAGE:')
 
-                if mr is not None and mr.date is not None: text.append(' %s' % (mr.date))
+                if mr is not None and mr.date is not None:
+                    text.append(' %s' % (mr.date))
                 text.append(' to %s' % (s.name()))
-                if mr is not None and mr.where is not None: text.append(' in %s' % (mr.where))
+                if mr is not None and mr.where is not None:
+                    text.append(' in %s' % (mr.where))
                 text.append('.')
                 num += 1
         return ''.join(text)
@@ -265,6 +274,7 @@ class Interesting:
         for vr in [ p.deathVr, p.birthVr ]:
             if vr is None or vr.where is None:
                 continue
+            
             loc = vr.where.split(',')[-1].strip()
             flagImage = self.PLACES.get(loc)
             if flagImage is not None:
@@ -292,7 +302,8 @@ class ClanTree(TreeBuilder):
             df.write('subgraph { rank = same\n')
             prevPer = None
             for num, p in gen:
-                if p.fake or p.isPrivate(): continue
+                if p.fake or p.isPrivate():
+                    continue
                 
                 # Write out this person
                 df.write( self.node(p, num) )

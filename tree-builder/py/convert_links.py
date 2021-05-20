@@ -1,25 +1,37 @@
 #!/usr/bin/python3
 
 import os
-import argparse
 import ntpath
 
-import pth; pth.setPythonpath()
-
 from osutils import getLinkSuffix, readlink_scut, readlink_url, fwdslash
-from osutils import makelink_url, makelink_scut
 from osutils import INTERNET_SCUT_SUFFIX, WINDOWS_SCUT_SUFFIX, BCKf, TMPf
-from ft_utils import NULL_LNK, TREE_NODE, getTreeRoot, tryRebaseLink, makelink_withbck
+from ft_utils import NULL_LNK, tryRebaseLink, makelink_withbck, getLinkMaker
 
 # To remove the backups:
 # find . -name '__bck_*' -exec rm {} +
+    
+def readLink(lnkName):
+    # Deliberately not using osutils.readlink() here so that we can get
+    # any relative symlinks
+    tgt = None
+    if lnkName.endswith(INTERNET_SCUT_SUFFIX):
+        tgt = readlink_url(lnkName) # always absolute
+    elif lnkName.endswith(WINDOWS_SCUT_SUFFIX):
+        tgt = readlink_scut(lnkName) # abs or rel (pref rel)
+    elif os.path.islink(lnkName):
+        # use os.readlink() to preserve a relative path if present - it
+        # makes the rebasing more resilient
+        tgt = os.readlink(lnkName)
+    
+    return tgt
+
 
 class Converter:
     def __init__(self, dryrun, rootPath, oldRootNode, link_type, absLinks):
         self.dryrun = dryrun
         self.rootPath = os.path.abspath(rootPath)
         self.oldRootNode = oldRootNode
-        self.mklnk = self.getLinkMaker(link_type)
+        self.mklnk = getLinkMaker(link_type)
         self.newLnkSuffix = getLinkSuffix(self.mklnk)
         
         self.absLinks = absLinks
@@ -27,18 +39,6 @@ class Converter:
             print("Forcing absolute links")
             self.absLinks = True
         
-    def getLinkMaker(self, link_type):
-        '''Return the function used to make the link type '''
-        
-        if link_type == 'url':
-            return makelink_url
-        elif (link_type == 'sym') and (os.name == 'posix'):
-            return os.symlink
-        elif (link_type == 'scut') and (os.name == 'nt'):
-            return makelink_scut
-        else:
-            raise Exception("Unsupported link type %s" % (link_type))
-    
     def convert_links(self):
         numLinks = 0
         noTarget = []
@@ -72,19 +72,10 @@ class Converter:
                     #os.remove(lnkName)
                     continue
 
-                # Deliberately not using osutils.readlink() here so that we can get
-                # any relative symlinks
-                if lnkName.endswith(INTERNET_SCUT_SUFFIX):
-                    tgt = readlink_url(lnkName) # always absolute
-                elif lnkName.endswith(WINDOWS_SCUT_SUFFIX):
-                    tgt = readlink_scut(lnkName) # abs or rel (pref rel)
-                elif os.path.islink(lnkName):
-                    # use os.readlink() to preserve a relative path if present - it
-                    # makes the rebasing more resilient
-                    tgt = os.readlink(lnkName)
-                else:
-                    continue # not a link
-                
+                tgt = readLink(lnkName)
+                if tgt is None:
+                    continue
+                                
                 numLinks += 1
                 #print("FOUND", lnkName)
                 
@@ -92,14 +83,14 @@ class Converter:
                     newTgt = NULL_LINK_TGT
                 else:
                     # Discard any windows drive
-                    drv, tgt = ntpath.splitdrive(tgt)
+                    tgt = ntpath.splitdrive(tgt)[1]
     
                     # Normalise the path to use the os.sep for this OS
                     tgt = fwdslash(tgt)
                     tgt = os.path.normpath(tgt)
                   
                     # Try rebase
-                    rebased = tryRebaseLink(tgt, treeRoot, self.oldRootNode)
+                    rebased = tryRebaseLink(tgt, self.rootPath, treeRootNode = self.oldRootNode)
                     if rebased is not None:
                         newTgt = rebased
                     else:
@@ -130,40 +121,3 @@ class Converter:
             for lnk, tgt in noTarget:
                 print("%s from %s" % (tgt, lnk))
     
-##
-
-if __name__ == '__main__':
-    linkTypes = ['url']
-    if os.name == 'posix':
-        linkTypes.append('sym')
-    elif os.name == 'nt':
-        linkTypes.append('scut')
-        
-    parser = argparse.ArgumentParser(description='Convert Links')
-
-    # Optional parameters
-    parser.add_argument('-l', '--link_type', type=str, default='url', choices=linkTypes,
-                        help='Link type to be used')
-    parser.add_argument('-a', '--abs_links', action="store_true", default=False,
-                        help='Use absolute paths in sym links')
-    parser.add_argument('-r', '--root_node', type=str, default=TREE_NODE,
-                        help='Alternative tree root node (for incoming targets)')
-    parser.add_argument('-d', '--dryrun', action="store_true", default=False,
-                        help='Not for real')
-
-    # The positional parameter optionally specifies the tree-root
-    parser.add_argument('treeroot', metavar='treeroot', type=str, nargs='?',
-                        help='Tree Root (default search cwd)')
-
-    args = parser.parse_args()
-    
-    treeRoot = args.treeroot
-    if treeRoot is None:
-        treeRoot = getTreeRoot()
-    print("Tree-root is:", treeRoot)
-    
-    incomingRootNode = args.root_node
-    
-    converter = Converter(args.dryrun, treeRoot, incomingRootNode, args.link_type, args.abs_links)
-    converter.convert_links()
-         

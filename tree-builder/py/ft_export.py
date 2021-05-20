@@ -1,10 +1,10 @@
-from ft_people import Person, PersonFactory, isPerson
+from ft_people import PersonFactory
 from ft_build import MakeSearch
-from osutils import fwdslash, islink
-from ft_utils import HTML_IDX, MOTW
+from osutils import fwdslash, islink, rm_rf
+from ft_utils import HTML_IDX, MOTW, isPerson
 import shutil
 import os.path
-import lxml
+import lxml.html
 import urllib
 from os.path import relpath
 

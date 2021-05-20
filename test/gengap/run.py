@@ -7,11 +7,12 @@ THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(THIS_DIR, '../../tree-builder/py'))
 
 from osutils import makelink_url, makelink_scut, getLinkSuffix, rm_rf
-from ft_utils import TREE_NODE, extractPersonName
+from ft_utils import TREE_NODE, extractPersonName, getLinkMaker
 
-check_links = os.path.normpath(os.path.join(THIS_DIR,'..','..','tools','check-links.py'))
-fix_links = os.path.normpath(os.path.join(THIS_DIR,'..','..','tools','fix_links.py'))
+ftb = os.path.normpath(os.path.join(THIS_DIR,'..','..','tree-builder','py','ftb.py'))
 
+check_links = [ sys.executable, ftb, 'chklinks' ]
+fix_links = [ sys.executable, ftb, 'fixlinks' ]
 
 def runin(cmd, dir):
     cwd = os.getcwd()
@@ -21,17 +22,6 @@ def runin(cmd, dir):
     finally:
         os.chdir(cwd)
         
-
-def getLinkMaker():
-    if os.name == 'posix':
-        mklnk = os.symlink
-    else:
-        mklnk = makelink_scut
-        
-    #mklnk = makelink_url
-    
-    return mklnk
-
    
 class Tree:
     def __init__(self, treeRoot, linkMaker = makelink_url, absLinks = False):
@@ -88,7 +78,7 @@ class Test1:
         self.cleanup()
 
     def makeTree(self, dir, CLAN, head, head_p1=''):
-        tp = Tree(os.path.join(dir, TREE_NODE), getLinkMaker(), absLinks = False)
+        tp = Tree(os.path.join(dir, TREE_NODE), getLinkMaker(None), absLinks = False)
         
         dave = Person(tp, os.path.join(CLAN,   head, head_p1,'Dave'))
         jane = Person(tp, os.path.join('CLAN2','Baz','Jane'))
@@ -116,7 +106,8 @@ class Test1:
         treeDir = os.path.join(self.origTree, TREE_NODE)
         
         print("> Checking origTree - should have no bad links")
-        runin([sys.executable, check_links], treeDir)
+        cmd = check_links
+        runin(cmd, treeDir)
         
         rm_rf(self.origTree)
         
@@ -131,14 +122,18 @@ class Test1:
         # relative links: both (2) links will be bad
         # absolute links: 1 bad link
         print("> Checking gappedTree - should have 2 bad links")
-        runin([sys.executable, check_links], treeDir)
+        cmd = check_links
+        runin(cmd, treeDir)
         
-        runin([sys.executable, fix_links, 'findings'], treeDir)
+        cmd = fix_links
+        cmd.append('findings')
+        runin(cmd, treeDir)
         
         #  -------------------
         
         print("> Checking gappedTree after fixing - should have no bad links")
-        runin([sys.executable, check_links], treeDir)
+        cmd = check_links
+        runin(cmd, treeDir)
         
         self.makeTree(self.fixedTree, CLAN, newHead, origHead)
      
