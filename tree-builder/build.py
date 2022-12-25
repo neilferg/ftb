@@ -61,12 +61,17 @@ def buildJs():
     copy(os.path.join(JSLIB, 'jquery.maphilight.js'), JSOUT)
     copy(os.path.join(JSLIB, 'wz_jsgraphics.js'),     JSOUT)
     
+    ftb_pre = os.path.join(JSOUT, 'ftb-predom.js')
+    copy(               os.path.join(JSSRC, 'ftb-predom.js'), ftb_pre)
+    #copy(               os.path.join(JSSRC, 'iframe_resizer.js'), ftb_pre)
+    #copyappend(ftb_pre, os.path.join(JSSRC, 'ftb-predom.js'))
     
-    ftjs = os.path.join(JSOUT, 'ftb.js')
-    copy(            os.path.join(JSLIB, 'jquery-1.6.4.js'), ftjs) # for picbox
-    copyappend(ftjs, os.path.join(PICBOX,'js', 'picbox.js'))
-    copyappend(ftjs, os.path.join(JSSRC, 'picbox-autoload.js'))
-    copyappend(ftjs, os.path.join(JSSRC, 'iframe_resizer.js'))
+    ftb_post = os.path.join(JSOUT, 'ftb-postdom.js')
+    copy(                 os.path.join(JSLIB, 'jquery-1.6.4.js'), ftb_post) # for picbox
+    copyappend(ftb_post, os.path.join(PICBOX,'js', 'picbox.js'))
+    #copyappend(ftb_post, os.path.join(JSSRC, 'ftb-encrypt.js'))
+    copyappend(ftb_post, os.path.join(JSSRC, 'iframe_resizer.js'))
+    copyappend(ftb_post, os.path.join(JSSRC, 'ftb-postdom.js'))
      
     copy(os.path.join(JSSRC, 'search.js'),            JSOUT)
     copy(os.path.join(JSSRC, 'treegraph_hilight.js'), JSOUT)

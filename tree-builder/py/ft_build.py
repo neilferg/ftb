@@ -308,8 +308,9 @@ class MakeWeb:
                      '<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">\n'
                    ]
         ftBuilderRoot = fwdslash(relpath(os.path.join(self.pf.root,'..','ftb','dist'), path))
-        htmlText.append('<script defer type="text/javascript" src="%s/js/ftb.js"></script>\n' % (ftBuilderRoot))
         htmlText.append('<link rel="stylesheet" href="%s/css/ftb.css" type="text/css" />\n' % (ftBuilderRoot))
+        htmlText.append('<script type="text/javascript" src="%s/js/ftb-predom.js"></script>\n' % (ftBuilderRoot))
+        htmlText.append('<script defer type="text/javascript" src="%s/js/ftb-postdom.js"></script>\n' % (ftBuilderRoot))
         htmlText.append('<title>%s</title></head><body>\n' % (p.name()))
 
         htmlText.append("<h2>Vital Records</h2>\n")
