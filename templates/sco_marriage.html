@@ -7,14 +7,19 @@
     <script id="ftLoader" type="text/javascript">
       var i = location.href.lastIndexOf("/tree/");
       if (i != -1) {
-          var rt = location.href.substring(0, i);
+          let rt = location.href.substring(0, i);
       
-          var css = document.getElementById("stylesheet");
+          let css = document.getElementById("stylesheet");
           css.href = rt+"/ftb/dist/css/ftb.css";
+
+          let script = document.createElement('script');
+          script.src = rt+"/ftb/dist/js/ftb-predom.js";
+          document.head.appendChild(script);
       
-          var script1 = document.createElement('script');
-          script1.src = rt+"/ftb/dist/js/ftb.js";
-          document.head.appendChild(script1);
+          script = document.createElement('script');
+          script.defer = "1";
+          script.src = rt+"/ftb/dist/js/ftb-postdom.js";
+          document.head.appendChild(script);
       } else {
           console.error("Failed to find the 'tree' root directory in URL path");
       }

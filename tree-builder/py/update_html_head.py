@@ -38,7 +38,7 @@ class UpdateVrs:
         return newHead
     
     def candidateFile(self, f):
-        for e in self.filesglob :
+        for e in self.filesglob:
             if fnmatch.fnmatch(f, e):
                 return True
         return False 
@@ -52,6 +52,10 @@ class UpdateVrs:
                     continue
                 
                 fp = os.path.join(root, f)
+                
+                if fp == self.templateFile: # not the template
+                    continue
+                
                 tmpfp = os.path.join(root, TMPf+f)
                 bckfp = os.path.join(root, BCKf+f)
                 

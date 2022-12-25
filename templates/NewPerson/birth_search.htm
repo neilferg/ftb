@@ -1,20 +1,24 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-  <head>
+<!DOCTYPE HTML>
+<html><head>
     <!-- saved from url=(0014)about:internet -->
     <meta content="text/html; charset=windows-1252" http-equiv="Content-Type">
     <link id="stylesheet" rel="stylesheet" href="/opt/ftb/tree-builder/css/ftb.css" type="text/css">
     <script id="ftLoader" type="text/javascript">
       var i = location.href.lastIndexOf("/tree/");
       if (i != -1) {
-          var rt = location.href.substring(0, i);
+          let rt = location.href.substring(0, i);
       
-          var css = document.getElementById("stylesheet");
+          let css = document.getElementById("stylesheet");
           css.href = rt+"/ftb/dist/css/ftb.css";
+
+          let script = document.createElement('script');
+          script.src = rt+"/ftb/dist/js/ftb-predom.js";
+          document.head.appendChild(script);
       
-          var script1 = document.createElement('script');
-          script1.src = rt+"/ftb/dist/js/ftb.js";
-          document.head.appendChild(script1);
+          script = document.createElement('script');
+          script.defer = "1";
+          script.src = rt+"/ftb/dist/js/ftb-postdom.js";
+          document.head.appendChild(script);
       } else {
           console.error("Failed to find the 'tree' root directory in URL path");
       }
