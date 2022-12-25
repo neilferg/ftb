@@ -38,6 +38,9 @@ class MakeWeb:
         html.append(MOTW)
         html.append('<html><head><title>Family Tree</title>')
         html.append("<meta HTTP-EQUIV='Content-Type' CONTENT='text/html; charset=ISO-8859-1'>")
+        ftBuilderRoot = os.path.join('..','ftb','dist')
+        html.append('<script type="text/javascript" src="%s/js/ftb-predom.js"></script>\n' % (ftBuilderRoot))
+        html.append('<script defer type="text/javascript" src="%s/js/ftb-postdom.js"></script>\n' % (ftBuilderRoot))
         html.append('</head><body>')
         
         html.append('<span style="font-style: italic;">FamilyTree Version:</span> %s<br>' % self.pf.getVersion())

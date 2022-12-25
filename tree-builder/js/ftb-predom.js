@@ -17,36 +17,34 @@ function clearUrlQuery() {
     }
 }
 
+// ============================================================================
+
 clearUrlQuery();
 
 document.addEventListener('DOMSubtreeModified', (e) => {
   // window 'load' event was not enough to fully detect the sizing
-  console.log(document.URL+":", e); 
+  //console.log(document.URL+":", e); 
   reportResizeInfo("dom change");
-})
+});
+
+/*
+const observer = new MutationObserver((mutations, observer) => {
+  //console.log(document.URL+":", mutations); 
+  reportResizeInfo("dom change");
+});
+
+observer.observe(document, {
+  subtree: true,
+  attributes: true,
+  childList: true
+});
+*/
+
 
 // Handle posted iframe size DTOs from child
-window.onmessage = (e) => {
-  let dto = e.data;
-
-  if (dto.hasOwnProperty("type") && (dto.type === "resize")) { // resize DTO
-    let url = new URL(document.URL);
-    if (dto.url === url.href) { // reject messages from ourself
-        return;
-    }
-
-    let child_width  = dto.frameWidth;
-    let child_height = dto.frameHeight;
-
-    console.log(document.URL+": msg rx: size: h="+child_height+" w="+child_width+": setting iframe");
-
-    let iframe = document.getElementById("child_iframe")
-    if (iframe) {
-        iframe.height=child_height;
-        iframe.width=child_width;
-    } else {
-        console.log("! No iframe node in DOM!");
-    }
+window.onmessage = (msg) => {
+  if (isResizeInfoMsg(msg)) {
+    handleResizeInfoMsg(msg);
   }
 }
 
