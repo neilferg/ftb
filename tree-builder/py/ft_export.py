@@ -1,7 +1,7 @@
 from ft_people import PersonFactory
 from ft_build import MakeSearch
 from osutils import fwdslash, islink, rm_rf
-from ft_utils import HTML_IDX, MOTW, isPerson
+from ft_utils import HTML_IDX, MOTW, isPerson, TREE_NODE
 import shutil
 import os.path
 import lxml.html
@@ -10,12 +10,18 @@ from os.path import relpath
 
 
 class Exporter:
-    def __init__(self, srcRoot):
-        self.srcRoot = os.path.abspath(srcRoot)
-        self.pf = PersonFactory(self.srcRoot)
+    def __init__(self, srcInstallRoot):
+        self.srcInstallRoot = os.path.abspath(srcInstallRoot)
+        self.srcTreeRoot = os.path.join(srcInstallRoot, TREE_NODE)
+        self.pf = PersonFactory(self.srcTreeRoot)
         
-    def export(self, expRoot):
-        self.expRoot = os.path.abspath(expRoot)
+    def export(self, expInstallRoot):
+        self.expInstallRoot = os.path.abspath(expInstallRoot)
+        self.expTreeRoot = os.path.join(expInstallRoot, TREE_NODE)
+        
+        rm_rf(self.expInstallRoot)
+        os.makedirs(self.expTreeRoot)
+        
         self.pf.scan()
         
         self.writeVersion()
@@ -26,7 +32,7 @@ class Exporter:
                 continue
             
             srcPath = p.path
-            expPath = os.path.join(self.expRoot, p.surname(), p.getIdStr())
+            expPath = os.path.join(self.expTreeRoot, p.surname(), p.getIdStr())
             self.exportDir(srcPath, expPath)
                 
         self.exportInfra()
@@ -35,38 +41,40 @@ class Exporter:
     def writeVersion(self):
         version = self.pf.getVersion()
         version = "FT_" + version.replace(".", "_")
-        with open(os.path.join(self.expRoot, version), 'w') as fs:
+        with open(os.path.join(self.expTreeRoot, version), 'w') as fs:
             fs.write(version)
             
     def exportInfra(self):
-        self.exportDir(os.path.join(self.srcRoot, "help"),
-                       os.path.join(self.expRoot, "help"))
+        src = os.path.join(self.srcInstallRoot, 'ftb', 'dist')
+        src = os.path.realpath(src)
         
-        src = os.path.join(self.srcRoot, 'ftb')
-        dst = os.path.join(self.expRoot, 'ftb')
-        rm_rf(dst) 
+        dst = os.path.join(self.expInstallRoot, 'ftb', 'dist')
+        rm_rf(dst)
         shutil.copytree(src, dst)
         
-        # Re-build the search index
-        MakeSearch(self.pf, self.expRoot).makeSearchIndex(obsfuc = True)
+        self.copyFile(os.path.join(self.srcTreeRoot, 'help.htm'),
+                      os.path.join(self.expTreeRoot, 'help.htm'))
         
-        self.exportDir(os.path.join(self.srcRoot, "photo_albums"),
-                       os.path.join(self.expRoot, "photo_albums"))
+        # Re-build the search index
+        MakeSearch(self.pf, self.expTreeRoot).makeSearchIndex(obsfuc = True)
+        
+        ##self.exportDir(os.path.join(self.srcTreeRoot, "photo_albums"),
+        ##               os.path.join(self.expTreeRoot, "photo_albums"))
         
     def exportTrees(self):
-        self.copyFile(os.path.join(self.srcRoot, HTML_IDX),
-                      os.path.join(self.expRoot, HTML_IDX))
-        self.copyFile(os.path.join(self.srcRoot, 'families.html'),
-                      os.path.join(self.expRoot, 'families.html'))
+        self.copyFile(os.path.join(self.srcTreeRoot, HTML_IDX),
+                      os.path.join(self.expTreeRoot, HTML_IDX))
+        self.copyFile(os.path.join(self.srcTreeRoot, 'families.html'),
+                      os.path.join(self.expTreeRoot, 'families.html'))
         
         for clan in self.pf.getClans():
-            expClanRoot = os.path.join(self.expRoot, clan)
+            expClanRoot = os.path.join(self.expTreeRoot, clan)
             if not os.path.exists(expClanRoot):
                 continue
             
-            self.exportHtmlFile(os.path.join(self.srcRoot, clan, "_clanTree.htm"),
+            self.exportHtmlFile(os.path.join(self.srcTreeRoot, clan, "_clanTree.htm"),
                                 os.path.join(expClanRoot, "_clanTree.htm"))
-            self.copyFile(os.path.join(self.srcRoot, clan, "_clanTree.png"),
+            self.copyFile(os.path.join(self.srcTreeRoot, clan, "_clanTree.png"),
                           os.path.join(expClanRoot, "_clanTree.png"))
             
     def exportDir(self, srcPath, expPath):
@@ -78,9 +86,14 @@ class Exporter:
             for d in dirs:
                 if isPerson(d):
                     skip.append(d)
+                    continue
+                
+                src = os.path.join(root, d)
+                
+                if islink(src):
+                    skip.append(d)
                 else:
-                    dst = os.path.join(root, d)
-                    dst = dst[len(srcPath) + 1:]
+                    dst = src[len(srcPath) + 1:]
                     dst = os.path.join(expPath, dst)
                     os.makedirs(dst, exist_ok=True)
                     
@@ -88,14 +101,15 @@ class Exporter:
                 dirs.remove(s)
             
             for f in files:
-                if islink(f):
+                src = os.path.join(root, f)
+                
+                if islink(src):
                     continue
                 
                 dummy, ext = os.path.splitext(f)
                 if ext in ['.tif']:
                     continue
-                
-                src = os.path.join(root, f)
+                 
                 dst = src[len(srcPath) + 1:]
                 dst = os.path.join(expPath, dst)
                 
@@ -127,17 +141,17 @@ class Exporter:
                 pPathItem = self.splitPersonPath(path)
                 if pPathItem is not None:
                     p, pathSeg = pPathItem
-                    path = os.path.join(self.expRoot, p.surname(), p.getIdStr())
+                    path = os.path.join(self.expTreeRoot, p.surname(), p.getIdStr())
                     path = os.path.join(path, pathSeg)
                 else:
-                    path = os.path.join(self.expRoot, path[len(self.srcRoot) + 1:])
+                    path = os.path.join(self.expInstallRoot, path[len(self.srcInstallRoot) + 1:])
                     
                 path = fwdslash(relpath(path, os.path.dirname(dst)))
                 lnk = urllib.parse.urlunparse( ('', '', urllib.parse.quote(path), '', lnk.query, lnk.fragment) )
                 el.attrib[attrib] = lnk
 
-        with open(dst, "w") as fs:
-            fs.write(MOTW)
+        with open(dst, "wb") as fs:
+            fs.write(MOTW.encode("utf8"))
             fs.write(lxml.html.tostring(doc))
         
     def splitPersonPath(self, path):

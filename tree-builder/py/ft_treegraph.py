@@ -7,7 +7,7 @@ import glob
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 from osutils import fwdslash, url2path, path2url
-from ft_utils import FT_ROOT_subst_leader, FTB_ROOT_subst, TREE_ROOT_subst, CLANTREE
+from ft_utils import FT_ROOT_subst_leader, FTB_ROOT_subst, TREE_ROOT_subst, CLANTREE, MOTW
 
 
 def findDotExe():
@@ -198,7 +198,7 @@ class TreeBuilder:
         container.append(eMap)
 
         with open(htmlFilePath, "wb") as fd:
-            #fd.write(MOTW)
+            fd.write(MOTW.encode("utf8"))
             fd.write(lxml.html.tostring(opDoc, pretty_print=True))
         
     def getTitle(self, p):

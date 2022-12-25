@@ -9,6 +9,7 @@ from fix_links import Fixer
 import ft_build
 from ft_admin import cleanupfiles, init_new
 from ft_bond import bond, PartnerLink
+from ft_export import Exporter
 from convert_links import Converter
 from update_html_head import UpdateVrs, FILES_ALL_FTLOADER, FILES_ALL_HTML, FILES_VRS_ONLY
 
@@ -78,6 +79,20 @@ def handle_bond(args):
         
     bond(args.partner[0], args.relationship, linkType=args.link_type, force=args.force)
 
+def handle_export(args):
+    treeRoot = args.treeroot
+    if treeRoot is None:
+        treeRoot = getTreeRoot()
+       
+    srcInstallRoot = os.path.normpath(os.path.join(treeRoot, '..'))
+    for d in ['ftb', TREE_NODE]:
+        if not os.path.exists(os.path.join(srcInstallRoot, d)):
+            raise Exception("Invalid treeroot") 
+
+    expRoot = args.exportdir[0]
+        
+    exporter = Exporter(srcInstallRoot)
+    exporter.export(expRoot)   
  
 def cli(cliargs = None):
     parser = argparse.ArgumentParser()
@@ -215,6 +230,22 @@ def cli(cliargs = None):
                              help='Partner relationship {%(choices)s}. Default p')
     
     bond_parser.set_defaults(handle=handle_bond)
+    
+    # publish/export command
+    # ----------------------
+    pub_parser = subparser.add_parser('publish', help="Publish/export the tree")
+    
+    # Optional parameters
+    pub_parser.add_argument('-r', '--treeroot', type=str, default=None,
+                            help='Tree root to copy from (default search cwd)')
+    pub_parser.add_argument('-e', '--encrypt', action="store_true", default=False,
+                            help='Encrypt files')
+
+    # The positional parameter specifies the export path
+    pub_parser.add_argument('exportdir', metavar='exportdir', type=str, nargs=1,
+                            help='Directory where ftb will be exported to')
+    
+    pub_parser.set_defaults(handle=handle_export)
     
     # =====================================================
     
