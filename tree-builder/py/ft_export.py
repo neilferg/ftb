@@ -152,7 +152,7 @@ class Exporter:
 
         with open(dst, "wb") as fs:
             fs.write(MOTW.encode("utf8"))
-            fs.write(lxml.html.tostring(doc))
+            fs.write(lxml.html.tostring(doc, doctype='<!DOCTYPE HTML>'))
         
     def splitPersonPath(self, path):
         splitpath = path.split(os.sep)

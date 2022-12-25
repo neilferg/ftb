@@ -199,7 +199,7 @@ class TreeBuilder:
 
         with open(htmlFilePath, "wb") as fd:
             fd.write(MOTW.encode("utf8"))
-            fd.write(lxml.html.tostring(opDoc, pretty_print=True))
+            fd.write(lxml.html.tostring(opDoc, doctype='<!DOCTYPE HTML>', pretty_print=True))
         
     def getTitle(self, p):
         title = []

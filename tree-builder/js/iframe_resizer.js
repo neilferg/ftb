@@ -34,50 +34,21 @@
       return (elmWidth - elmMargin);
     }
 
-
-// PARENT DOC
-
-// This gets called by the parent. It intercepts the message that the
-// child sends and resizes the iframe 
-
- function attachIFrameResizer() {
-    // receive message from child iframe
-    window.onmessage = (e) => {
-      if (e.data.hasOwnProperty("frameHeight")) {
-        var iframe = document.getElementById("child_iframe");
-
-        var minHeight = 0;
-        //minHeight = document.documentElement.clientHeight - 100;
-        minHeight = window.innerHeight - 100;
-
-        if (e.data.frameHeight < minHeight) {
-            e.data.frameHeight = minHeight;
-        }
-	console.log("resize: h(min)="+e.data.frameHeight+"("+minHeight+") w="+e.data.frameWidth);
-
-        iframe.style.width  = e.data.frameWidth;
-        iframe.style.height = e.data.frameHeight;
-      }
-    };
- }
-
-
- // CHILD IFRAME
-
-  const postIframeInfo = (mode) => {
+  function reportResizeInfo(mode) {
     var height = elementHeight(document.body);
     var width  = elementWidth(document.body);
 
-    console.log("report ("+mode
-                 +"): h="+height
-                 +" o="+document.body.offsetHeight
-                 +" c="+document.body.clientHeight
-                 +" s="+document.body.scrollHeight
-                 +" w="+window.outerHeight);
+    let url = new URL(document.URL);
 
-      window.parent.postMessage({
+    console.log(document.URL+": sending msg: h="+height+", w="+width);
+
+    let dto = {
+        type: "resize",
+        url: url.href,
         frameHeight: height,
         frameWidth: width
-      }, '*');
+    };
+
+    window.parent.postMessage(dto, '*');
   }
 

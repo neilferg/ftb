@@ -34,7 +34,7 @@ class MakeWeb:
         NUM_COLS = 4
 
         html = []
-        html.append("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN' 'http://www.w3.org/TR/html4/loose.dtd'>")
+        html.append("<!DOCTYPE HTML>")
         html.append(MOTW)
         html.append('<html><head><title>Family Tree</title>')
         html.append("<meta HTTP-EQUIV='Content-Type' CONTENT='text/html; charset=ISO-8859-1'>")
@@ -303,7 +303,8 @@ class MakeWeb:
     def makePersonIndex(self, p, path):
         dc = ft_otherfiles.DirCat(self.pf.root)
 
-        htmlText = [ MOTW,
+        htmlText = [ '<!DOCTYPE HTML>',
+                     MOTW,
                      '<html><head>\n',
                      '<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">\n'
                    ]

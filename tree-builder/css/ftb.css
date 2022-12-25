@@ -41,7 +41,6 @@ img
  */
 #child_iframe
 {
-    height: calc(100% - 76px);
     width: 100%;
     overflow: hidden; /*replacement for scrolling="no"*/
     border: 0; 

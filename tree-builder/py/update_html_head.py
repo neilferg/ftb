@@ -99,7 +99,7 @@ class UpdateVrs:
                 else:                    
                     # Write to temp file first
                     with open(tmpfp, "wb") as fs:
-                        fs.write( lxml.html.tostring(doc, doctype='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">') )
+                        fs.write( lxml.html.tostring(doc, doctype='<!DOCTYPE HTML>') )
                     
                     # Backup existing  
                     if os.path.exists(bckfp):
