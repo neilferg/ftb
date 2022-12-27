@@ -40,11 +40,31 @@ observer.observe(document, {
 });
 */
 
+function isImageViewerMsg(msg) {
+  return (msg.data.hasOwnProperty("type") && (msg.data.type === "image-viewer"));
+}
+
+function handleImageViewerMsg(msg) {
+  let dto = msg.data;
+  $.picbox(dto.url);
+}
+
+function sendImageViewerMsg(url) {
+    let dto = {
+        type: "image-viewer",
+        url: url,
+    };
+
+    window.parent.postMessage(dto, '*');
+}
+
 
 // Handle posted iframe size DTOs from child
 window.onmessage = (msg) => {
   if (isResizeInfoMsg(msg)) {
     handleResizeInfoMsg(msg);
+  } else if (isImageViewerMsg(msg)) {
+    handleImageViewerMsg(msg);
   }
 }
 
