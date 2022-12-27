@@ -36,13 +36,10 @@ img
     vertical-align: text-top;
 }
 
-/* We want the iframe to occupy all of the remaining height
-   to maximise the area available to the photo viewer
- */
 #child_iframe
 {
     width: 100%;
-    overflow: hidden; /*replacement for scrolling="no"*/
+    overflow: hidden; /*the <iframe> node ALSO needs to include scrolling="no"*/
     border: 0; 
 }
 
