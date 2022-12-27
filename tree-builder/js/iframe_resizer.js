@@ -41,13 +41,10 @@
     var height = elementHeight(document.body);
     var width  = elementWidth(document.body);
 
-    let url = new URL(document.URL);
-
     //console.log(document.URL+": sending msg: h="+height+", w="+width);
 
     let dto = {
         type: "resize",
-        url: url.href,
         frameHeight: height,
         frameWidth: width
     };
@@ -62,8 +59,7 @@
   function handleResizeInfoMsg(msg) {
       let dto = msg.data;
 
-      let url = new URL(document.URL);
-      if (dto.url === url.href) { // reject messages from ourself
+      if (msg.source.window === this.window) { // reject messages from ourself
           return;
       }
 
