@@ -84,11 +84,6 @@ class Exporter:
             
             self.exportHtmlFile(os.path.join(self.srcTreeRoot, clan, "_clanTree.htm"),
                                 os.path.join(expClanRoot, "_clanTree.htm"))
-            # NF_DEBUG: TODO: CLANTREE PNG NEEDS TO BE A BASE64 IMG INSIDE HTML
-            shutil.copy(os.path.join(self.srcTreeRoot, clan, "_clanTree.png"),
-                        os.path.join(expClanRoot, "_clanTree.png"))
-            ##self.copyFile(os.path.join(self.srcTreeRoot, clan, "_clanTree.png"),
-            ##              os.path.join(expClanRoot, "_clanTree.png"))
             
     def exportDir(self, srcPath, expPath):
         print(srcPath, "->", expPath)
