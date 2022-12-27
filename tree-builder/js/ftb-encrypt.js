@@ -81,20 +81,14 @@
     return bufferToHex2(exportedKeyBuffer);
   }
 
-  var gkey_hex = null;
   const SALT = new Uint8Array([13, 141, 85, 118, 69, 96, 89, 231, 199, 128, 94, 139, 14, 175, 242, 80]);
 
-  async function getKey() {
+  async function getKey_hex() {
     //gkey_hex = null; window.sessionStorage.removeItem('ftb_key');
 
     if (! gkey_hex) {
-      if (gOriginalUrl) {
-        const url = new URL(gOriginalUrl);
-        gkey_hex = url.searchParams.get('ftb_key');
-      }
-      if (! gkey_hex) {
-        gkey_hex = window.sessionStorage.getItem('ftb_key');
-      }
+      gkey_hex = window.sessionStorage.getItem('ftb_key');
+
       if (! gkey_hex) {
         let passphrase = promptForPassphrase();
 
@@ -113,13 +107,16 @@
       }
     }
 
-    return window.crypto.subtle.importKey("raw", hexToBuffer(gkey_hex), "AES-GCM", true, ["encrypt", "decrypt"]);
+    return gkey_hex;
+  }
+
+  async function getKey(key_hex) {
+    return window.crypto.subtle.importKey("raw", hexToBuffer(key_hex), "AES-GCM", true, ["encrypt", "decrypt"]);
   }
 
   function clearKey() {
       window.sessionStorage.removeItem('ftb_key');
       gkey_hex = null;
-      gOriginalUrl = null;
   }
 
   // --------------------------------------------------------------------------
@@ -128,25 +125,19 @@
     return window.prompt("Enter your password");
   }
 
-  // decryptDocument()
-  async function decrypt() {
+  async function ftb_decryptDocument(key_hex, content) {
     console.log("decrypting "+document.URL );
 
     // An encrypted document consists of a <body> with one <div id=content> element.
-    // This div contains hex bytes of the form <salt>-<iv>-<ciphertext>
+    // This div contains hex bytes of the form <iv>-<ciphertext>
     // We extract these params, decrypt the ciphertext & use it to replace the div's text
 
-    let content = document.getElementById("encrypted_content");
-    if (! content) {
-       return; // document is not encrypted
-    }
-
-    let [salt, iv, ciphertext] = content.innerHTML.split("-")
+    let [iv, ciphertext] = content.innerHTML.split("-")
 
     ciphertext = hexToBuffer(ciphertext);
     iv = hexToBuffer(iv);
 
-    let key = await getKey();
+    let key = await getKey(key_hex);
 
     try {
       let decrypted = await window.crypto.subtle.decrypt({name: "AES-GCM", iv: iv}, key, ciphertext);
@@ -169,12 +160,12 @@
     }
   }
 
-  async function fetchAndDecryptJSONPFile(url) {
+  async function fetchAndDecryptJSONPFile(url, key_hex) {
     let encryptedImjObj = await loadJSONPFile(url);
 
     let iv = base64ToArrayBuffer(encryptedImjObj.iv);
     let cipherdata = base64ToArrayBuffer(encryptedImjObj.cipherdata);
-    let key = await getKey();
+    let key = await getKey(key_hex);
 
     try {
       let decrypted = await window.crypto.subtle.decrypt({name: "AES-GCM", iv: iv}, key, cipherdata);

@@ -5,15 +5,15 @@
 // - iframe-resizer
 
 
-var gOriginalUrl = null;
+var gkey_hex = null;
 
 function clearUrlQuery() {
-    let uri = window.location.toString();
-    gOriginalUrl = uri;
-
-    if (uri.indexOf("?") > 0) {
-        let clean_uri = uri.substring(0, uri.indexOf("?"));
-        window.history.replaceState({}, document.title, clean_uri);
+    let url = new URL(window.location);
+    let key_hex = url.searchParams.get('ftb_key');
+    if (key_hex !== null) {
+        gkey_hex = key_hex;
+        url.searchParams.delete('ftb_key');
+        window.history.replaceState({}, document.title, url.toString());
     }
 }
 
@@ -44,15 +44,16 @@ function isImageViewerMsg(msg) {
   return (msg.data.hasOwnProperty("type") && (msg.data.type === "image-viewer"));
 }
 
-function handleImageViewerMsg(msg) {
+async function handleImageViewerMsg(msg) {
   let dto = msg.data;
-  $.picbox(dto.url);
+  ftb_displayImage_impl(dto.url, dto.key_hex);
 }
 
-function sendImageViewerMsg(url) {
+function sendImageViewerMsg(url, key_hex) {
     let dto = {
         type: "image-viewer",
         url: url,
+        key_hex: key_hex,
     };
 
     window.parent.postMessage(dto, '*');

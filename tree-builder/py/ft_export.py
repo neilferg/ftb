@@ -8,8 +8,18 @@ import lxml.html
 import urllib
 from os.path import relpath
 
+import binascii
+import base64
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+
 
 class Exporter:
+    #SALT = os.urandom(16)
+    SALT = bytes([13, 141, 85, 118, 69, 96, 89, 231, 199, 128, 94, 139, 14, 175, 242, 80])
+    PASSPHRASE = 'z'
+        
     def __init__(self, srcInstallRoot):
         self.srcInstallRoot = os.path.abspath(srcInstallRoot)
         self.srcTreeRoot = os.path.join(srcInstallRoot, TREE_NODE)
@@ -74,8 +84,11 @@ class Exporter:
             
             self.exportHtmlFile(os.path.join(self.srcTreeRoot, clan, "_clanTree.htm"),
                                 os.path.join(expClanRoot, "_clanTree.htm"))
-            self.copyFile(os.path.join(self.srcTreeRoot, clan, "_clanTree.png"),
-                          os.path.join(expClanRoot, "_clanTree.png"))
+            # NF_DEBUG: TODO: CLANTREE PNG NEEDS TO BE A BASE64 IMG INSIDE HTML
+            shutil.copy(os.path.join(self.srcTreeRoot, clan, "_clanTree.png"),
+                        os.path.join(expClanRoot, "_clanTree.png"))
+            ##self.copyFile(os.path.join(self.srcTreeRoot, clan, "_clanTree.png"),
+            ##              os.path.join(expClanRoot, "_clanTree.png"))
             
     def exportDir(self, srcPath, expPath):
         print(srcPath, "->", expPath)
@@ -121,7 +134,7 @@ class Exporter:
         if ext in ['.htm', '.html']:
             self.exportHtmlFile(src, dst)
         else:
-            shutil.copyfile(src, dst)
+            self.encryptBinary(src, dst+'.json')
          
     def exportHtmlFile(self, src, dst):
         with open(src, "r") as fs:    
@@ -148,11 +161,81 @@ class Exporter:
                     
                 path = fwdslash(relpath(path, os.path.dirname(dst)))
                 lnk = urllib.parse.urlunparse( ('', '', urllib.parse.quote(path), '', lnk.query, lnk.fragment) )
+
+                # Encrypt any binaries (images etc) if under tree
+                ext = os.path.splitext(lnk)[1]
+                if pPathItem and (not ext in ['.css', '.htm', '.html', '.js']):
+                    lnk += '.json'
+                    
                 el.attrib[attrib] = lnk
 
+        self.encryptHtmlDOM(doc)
+                
         with open(dst, "wb") as fs:
             fs.write(MOTW.encode("utf8"))
             fs.write(lxml.html.tostring(doc, doctype='<!DOCTYPE HTML>'))
+                
+    def encryptHtmlDOM(self, doc):
+        title = doc.xpath('/html/head/title')[0]
+        titleText = title.text
+        doc.head.remove(title)
+        
+        txt = self.extractTxt(doc.body)
+        doc.body.clear()
+        txt += '<div hidden id="real_title">'+titleText+'</div>'
+        
+        hkdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=self.SALT, iterations=100000)
+        key = hkdf.derive(self.PASSPHRASE.encode())
+        
+        iv = os.urandom(12)
+        data = txt.encode("utf8")
+        aesgcm = AESGCM(key)
+        ct = aesgcm.encrypt(iv, data, None)
+        
+        iv_hex = binascii.b2a_hex(iv).decode("utf8")
+        ct_hex = binascii.b2a_hex(ct).decode("utf8")
+        
+        content_div = lxml.etree.Element("div")
+        content_div.set("id", 'encrypted_content')
+        content_div.text = iv_hex+'-'+ct_hex
+        doc.body.append(content_div)
+        
+    def extractTxt(self, node):
+        txt = []
+        for c in node.xpath("node()"):
+            if type(c) == lxml.etree._ElementUnicodeResult:
+                txt.append(str(c))
+            else:
+                txt.append(lxml.html.tostring(c, with_tail=False).decode())
+        txt = "".join(txt)
+        return txt
+    
+    def encryptBinary(self, fin, fout):        
+        hkdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=self.SALT, iterations=100000)
+        key = hkdf.derive(self.PASSPHRASE.encode())
+        
+        iv = os.urandom(12)
+
+        with open(fin, 'rb') as fs:
+            data = fs.read()
+
+        aesgcm = AESGCM(key)
+        ct = aesgcm.encrypt(iv, data, None)
+        
+        dictkey = os.path.basename(fout)
+        
+        with open(fout, 'wb') as fs:
+            fs.write(b"gJSONP_objs.set('"+dictkey.encode('utf8')+b"', {\n");
+
+            fs.write(b"iv: '")
+            fs.write(base64.b64encode(iv))
+            fs.write(b"',\n")
+
+            fs.write(b"cipherdata: '")
+            fs.write(base64.b64encode(ct))
+            fs.write(b"'\n")
+        
+            fs.write(b"});\n");
         
     def splitPersonPath(self, path):
         splitpath = path.split(os.sep)

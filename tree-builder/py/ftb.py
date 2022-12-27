@@ -83,6 +83,7 @@ def handle_export(args):
     treeRoot = args.treeroot
     if treeRoot is None:
         treeRoot = getTreeRoot()
+    treeRoot = os.path.abspath(treeRoot)
        
     srcInstallRoot = os.path.normpath(os.path.join(treeRoot, '..'))
     for d in ['ftb', TREE_NODE]:
