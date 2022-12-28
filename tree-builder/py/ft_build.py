@@ -25,12 +25,12 @@ class MakeWeb:
         self.pf = pf
 
     def make(self):
-        self.makeRoot()
+        self.makeRoot(os.path.join(self.pf.root, "families.html"))
         self.makeIndividuals()
         self.makeClanTreegraphs()
         MakeSearch(self.pf).makeSearchIndex()
 
-    def makeRoot(self):
+    def makeRoot(self, familiesHtml, encrypt = False):
         NUM_COLS = 4
 
         html = []
@@ -64,13 +64,16 @@ class MakeWeb:
                 if n > 0:
                     html.append(END_COL)
                 html.append(NEW_COL)
-            html.append('<li><a href="%s" target="_top">%s</a></li>' % (c + "/_clanTree.htm", c))
+            
+            clanIdx = c if (not encrypt) else str(self.pf.getClanId(c))
+            clanIdx += "/_clanTree.htm"
+            html.append('<li><a href="%s" target="_top">%s</a></li>' % (clanIdx, c))
             
         if numClans > 0:
             html.append(END_COL)
         html.append('</tr></table></body></html>')
 
-        with open(os.path.join(self.pf.root, "families.html"), "w") as fs:
+        with open(familiesHtml, "w") as fs:
             fs.write('\n'.join(html))
 
     def makeClanTreegraphs(self):

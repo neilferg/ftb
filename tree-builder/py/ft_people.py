@@ -10,6 +10,7 @@ ID_START = 1000
 class PersonFactory:
     def __init__(self, root):
         self.people = {}
+        self.clans = {}
         self.root = os.path.abspath(root)
         self.splitroot = self.root.split(os.sep)
         
@@ -19,10 +20,7 @@ class PersonFactory:
         self.treeFrozen = False
         
     def getVersion(self):
-        return '1.0.2'
-    
-        LAUNCHER = os.path.join(self.root, "scripts", "launcher", "release", "FamilyTree.exe")
-        return getFileVersion(LAUNCHER)
+        return '1.0.2' # NF_DEBUG: FIXME
 
     def getPerson(self, path):
         path = os.path.abspath(path)
@@ -37,21 +35,18 @@ class PersonFactory:
             p = Person(self.id, path, self)
             self.id += 1
             self.people[path] = p
-            
+            if (not p.fake):
+                clan = p.surname()
+                if not clan in self.clans:
+                    clanid = len(self.clans)
+                    self.clans[clan] = clanid          
         return p
         
     def getClans(self):
-        clans = []
-        for p in self.people.values():
-            if p.fake:
-                continue
-            
-            clan = p.surname()
-            
-            if not clan in clans:
-                clans.append(clan)
-                
-        return clans
+        return self.clans.keys()
+    
+    def getClanId(self, clanName):
+        return self.clans[clanName]
 
     def getClanPeople(self, clan):
         for p in self.people.values():

@@ -1,5 +1,5 @@
-from ft_people import PersonFactory
-from ft_build import MakeSearch
+from ft_people import PersonFactory, Person
+from ft_build import MakeSearch, MakeWeb
 from osutils import fwdslash, islink, rm_rf
 from ft_utils import HTML_IDX, MOTW, isPerson, TREE_NODE
 import shutil
@@ -42,7 +42,7 @@ class Exporter:
                 continue
             
             srcPath = p.path
-            expPath = os.path.join(self.expTreeRoot, p.surname(), p.getIdStr())
+            expPath = os.path.join(self.expTreeRoot, str(self.pf.getClanId(p.surname())), p.getIdStr())
             self.exportDir(srcPath, expPath)
                 
         self.exportInfra()
@@ -65,8 +65,13 @@ class Exporter:
         self.copyFile(os.path.join(self.srcTreeRoot, 'help.htm'),
                       os.path.join(self.expTreeRoot, 'help.htm'))
         
+        # NF_DEBUG: SEARCH DISABLED FOR NOW
+        indexFile = os.path.join(self.expTreeRoot,"searchRecs.js")
+        with open(indexFile, "w") as fh:
+            fh.write("profiles = new Array();\n")
+            
         # Re-build the search index
-        MakeSearch(self.pf, self.expTreeRoot).makeSearchIndex(obsfuc = True)
+        #MakeSearch(self.pf, self.expTreeRoot).makeSearchIndex(obsfuc = True)
         
         ##self.exportDir(os.path.join(self.srcTreeRoot, "photo_albums"),
         ##               os.path.join(self.expTreeRoot, "photo_albums"))
@@ -74,11 +79,11 @@ class Exporter:
     def exportTrees(self):
         self.copyFile(os.path.join(self.srcTreeRoot, HTML_IDX),
                       os.path.join(self.expTreeRoot, HTML_IDX))
-        self.copyFile(os.path.join(self.srcTreeRoot, 'families.html'),
-                      os.path.join(self.expTreeRoot, 'families.html'))
+        
+        MakeWeb(self.pf).makeRoot(os.path.join(self.expTreeRoot, "families.html"), True)
         
         for clan in self.pf.getClans():
-            expClanRoot = os.path.join(self.expTreeRoot, clan)
+            expClanRoot = os.path.join(self.expTreeRoot, str(self.pf.getClanId(clan)))
             if not os.path.exists(expClanRoot):
                 continue
             
@@ -149,19 +154,24 @@ class Exporter:
                 pPathItem = self.splitPersonPath(path)
                 if pPathItem is not None:
                     p, pathSeg = pPathItem
-                    path = os.path.join(self.expTreeRoot, p.surname(), p.getIdStr())
+                    if isinstance(p, Person):
+                        path = os.path.join(self.expTreeRoot, str(self.pf.getClanId(p.surname())), p.getIdStr())
+                    else: # clan
+                        path = os.path.join(self.expTreeRoot, p)
+                        
                     path = os.path.join(path, pathSeg)
                 else:
                     path = os.path.join(self.expInstallRoot, path[len(self.srcInstallRoot) + 1:])
                     
                 path = fwdslash(relpath(path, os.path.dirname(dst)))
-                lnk = urllib.parse.urlunparse( ('', '', urllib.parse.quote(path), '', lnk.query, lnk.fragment) )
-
-                # Encrypt any binaries (images etc) if under tree
-                ext = os.path.splitext(lnk)[1]
+                
+                # Non-html files that are under the tree will be encrypted as jsonp
+                ext = os.path.splitext(path)[1]
                 if pPathItem and (not ext in ['.css', '.htm', '.html', '.js']):
-                    lnk += '.json'
-                    
+                    path += '.json'
+                
+                lnk = urllib.parse.urlunparse( ('', '', urllib.parse.quote(path), '', lnk.query, lnk.fragment) )
+    
                 el.attrib[attrib] = lnk
 
         self.encryptHtmlDOM(doc)
@@ -240,6 +250,12 @@ class Exporter:
             p = self.pf.people.get(tryPerson)
             if p is not None:
                 return (p, path[len(tryPerson) + 1:])
+            else:
+                clan = splitpath[plen-1]
+                clanid = self.pf.clans.get(clan) 
+                if clanid is not None:
+                    return (str(clanid), path[len(tryPerson) + 1:])
+                
             del splitpath[plen-1]
             plen = len(splitpath)
         return None

@@ -261,11 +261,5 @@ def cli(cliargs = None):
 ##
 
 if __name__ == '__main__':
-    try:
-        cli()
-    except Exception as e:
-        print('ERROR: '+str(e))
-        sys.exit(1)
-
-    sys.exit(0)
+    cli()
     
