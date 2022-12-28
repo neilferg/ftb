@@ -136,7 +136,7 @@ class Exporter:
             self.encryptBinary(src, dst+'.json')
          
     def exportHtmlFile(self, src, dst):
-        with open(src, "r") as fs:    
+        with open(src, "rb") as fs:    
             text = fs.read()
         doc = lxml.html.fromstring(text)
         #   e,  src/href, url, 
@@ -180,13 +180,17 @@ class Exporter:
             fs.write(lxml.html.tostring(doc, doctype='<!DOCTYPE HTML>'))
                 
     def encryptHtmlDOM(self, doc):
-        title = doc.xpath('/html/head/title')[0]
-        titleText = title.text
-        doc.head.remove(title)
+        titleText = None
+        title = doc.xpath('/html/head/title')
+        if len(title) > 0:
+            title = title[0]
+            titleText = title.text
+            doc.head.remove(title)
         
         txt = self.extractTxt(doc.body)
         doc.body.clear()
-        txt += '<div hidden id="real_title">'+titleText+'</div>'
+        if titleText is not None:
+            txt += '<div hidden id="real_title">'+titleText+'</div>'
         
         hkdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=self.SALT, iterations=100000)
         key = hkdf.derive(self.PASSPHRASE.encode())
