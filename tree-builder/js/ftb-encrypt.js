@@ -87,7 +87,11 @@
     //gkey_hex = null; window.sessionStorage.removeItem('ftb_key');
 
     if (! gkey_hex) {
-      gkey_hex = window.sessionStorage.getItem('ftb_key');
+      gkey_hex = window.name;
+
+      if (! gkey_hex) {
+          gkey_hex = window.sessionStorage.getItem('ftb_key');
+      }
 
       if (! gkey_hex) {
         let passphrase = promptForPassphrase();
@@ -104,6 +108,7 @@
                         ["encrypt", "decrypt"]);
         gkey_hex = await exportCryptoKey(key);
         window.sessionStorage.setItem('ftb_key', gkey_hex);
+        window.name = gkey_hex;
       }
     }
 

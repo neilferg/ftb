@@ -14,6 +14,10 @@ function clearUrlQuery() {
         gkey_hex = key_hex;
         url.searchParams.delete('ftb_key');
         window.history.replaceState({}, document.title, url.toString());
+
+        // This ensures that back-navigate will always have the key
+        //window.sessionStorage.setItem('ftb_key', gkey_hex);
+        window.name = gkey_hex;
     }
 }
 
