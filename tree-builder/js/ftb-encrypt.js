@@ -122,6 +122,7 @@
   function clearKey() {
       window.sessionStorage.removeItem('ftb_key');
       gkey_hex = null;
+      window.name = '';
   }
 
   // --------------------------------------------------------------------------

@@ -7,6 +7,7 @@ import os.path
 import lxml.html
 import urllib
 from os.path import relpath
+from subprocess import check_call
 
 import binascii
 import base64
@@ -18,12 +19,15 @@ from cryptography.hazmat.primitives import hashes
 class Exporter:
     #SALT = os.urandom(16)
     SALT = bytes([13, 141, 85, 118, 69, 96, 89, 231, 199, 128, 94, 139, 14, 175, 242, 80])
-    PASSPHRASE = 'z'
         
-    def __init__(self, srcInstallRoot):
+    def __init__(self, srcInstallRoot, args):
+        self.args = args
         self.srcInstallRoot = os.path.abspath(srcInstallRoot)
         self.srcTreeRoot = os.path.join(srcInstallRoot, TREE_NODE)
         self.pf = PersonFactory(self.srcTreeRoot)
+        
+        # If PASSPHRASE is None, then no encryption
+        self.PASSPHRASE = args.passphrase
         
     def export(self, expInstallRoot):
         self.expInstallRoot = os.path.abspath(expInstallRoot)
@@ -33,8 +37,6 @@ class Exporter:
         os.makedirs(self.expTreeRoot)
         
         self.pf.scan()
-        
-        self.writeVersion()
         
         # export people
         for srcPath, p in self.pf.people.items():
@@ -48,11 +50,8 @@ class Exporter:
         self.exportInfra()
         self.exportTrees()
         
-    def writeVersion(self):
-        version = self.pf.getVersion()
-        version = "FT_" + version.replace(".", "_")
-        with open(os.path.join(self.expTreeRoot, version), 'w') as fs:
-            fs.write(version)
+        if (self.args.win32_installer):
+            self.buildWin32Installer()
             
     def exportInfra(self):
         src = os.path.join(self.srcInstallRoot, 'ftb', 'dist')
@@ -259,3 +258,25 @@ class Exporter:
             del splitpath[plen-1]
             plen = len(splitpath)
         return None
+    
+    def buildWin32Installer(self):
+        INSTALLER_NSI = 'nsis-installer.nsi'
+        
+        with open(os.path.join(os.path.dirname(__file__), INSTALLER_NSI), 'r') as fs:
+            text = fs.read()
+             
+        version = self.pf.getVersion()
+        text = text.replace('PRODUCT_VERSION "1.0.0"', 'PRODUCT_VERSION "%s"' % (version))
+        text = text.replace('PRODUCT_PUBLISHER "Bob Bampot"', 'PRODUCT_PUBLISHER "%s"' % (self.args.author))
+        
+        installer = os.path.join(self.expInstallRoot, INSTALLER_NSI)
+        with open(installer, 'w') as fs:
+            fs.write(text)
+            
+        check_call(['makensis', installer])
+        
+        PRODUCT_INSTALLER_NAME = "FT-installer.exe"
+        installerAutogenExe = os.path.join(self.expInstallRoot, PRODUCT_INSTALLER_NAME)
+        installerExe = os.path.join(self.expInstallRoot, "Family-tree-installer-v%s.exe" % (version))
+        os.rename(installerAutogenExe, installerExe)
+        

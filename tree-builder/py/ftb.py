@@ -92,7 +92,7 @@ def handle_export(args):
 
     expRoot = args.exportdir[0]
         
-    exporter = Exporter(srcInstallRoot)
+    exporter = Exporter(srcInstallRoot, args)
     exporter.export(expRoot)   
  
 def cli(cliargs = None):
@@ -239,8 +239,12 @@ def cli(cliargs = None):
     # Optional parameters
     pub_parser.add_argument('-r', '--treeroot', type=str, default=None,
                             help='Tree root to copy from (default search cwd)')
-    pub_parser.add_argument('-e', '--encrypt', action="store_true", default=False,
-                            help='Encrypt files')
+    pub_parser.add_argument('-p', '--passphrase', type=str, default=None,
+                            help='Passphrase for encryption key')
+    pub_parser.add_argument('-a', '--author', type=str, default="ftb",
+                            help='Author/publisher name for installer')
+    pub_parser.add_argument('-i', '--win32-installer', action="store_true", default=False,
+                            help='Create a Windows installer')
 
     # The positional parameter specifies the export path
     pub_parser.add_argument('exportdir', metavar='exportdir', type=str, nargs=1,

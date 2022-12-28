@@ -43,7 +43,6 @@ class MakeWeb:
         html.append('<script defer type="text/javascript" src="%s/js/ftb-postdom.js"></script>\n' % (ftBuilderRoot))
         html.append('</head><body>')
         
-        html.append('<span style="font-style: italic;">FamilyTree Version:</span> %s<br>' % self.pf.getVersion())
         html.append('<h2>Families</h2>')
 
         ALL_CLANS = []

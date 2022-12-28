@@ -3,6 +3,7 @@ from osutils import getFileVersion
 from ft_utils import tryRebaseLink, PRIVATE, isClan, isPerson
 from ft_bond import PartnerLink
 import ft_vital
+import lxml.html
 
 
 ID_START = 1000
@@ -20,7 +21,20 @@ class PersonFactory:
         self.treeFrozen = False
         
     def getVersion(self):
-        return '1.0.2' # NF_DEBUG: FIXME
+        topIndex = os.path.join(self.root, 'index.html')
+        try:
+            with open(topIndex, "r") as fs:    
+                text = fs.read()
+            doc = lxml.html.fromstring(text)
+            
+            version = doc.get_element_by_id("FT_VERSION").text_content()
+            version = version.strip()
+            
+            version = version.split(':')
+            version = version[1].strip()
+            return version
+        except:
+            return '0.0.0'
 
     def getPerson(self, path):
         path = os.path.abspath(path)
