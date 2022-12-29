@@ -1,7 +1,4 @@
-var canvas = new jsGraphics("canvasOverlay");
-canvas.setColor("#ff0000");
-canvas.setStroke(3);
-
+var canvas = null;
 //var canvasHasDrawing = false;
 
 function polyXcoords(coords) {
@@ -91,17 +88,3 @@ function nav_and_set(id) {
    }
 }
 
-$(document).ready(function() {
-   var loc = window.location.hash.toString();
-
-   if ( loc.length > 0) {
-      id = loc.substring(1);
-      //alert("Here: $" + id + "$");
-
-      if ($.browser.msie) {
-         setTimeout('nav_and_set("' + id + '")', 200);
-      } else {
-         nav_and_set(id);
-      }
-   }
-});

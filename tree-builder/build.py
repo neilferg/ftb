@@ -42,6 +42,13 @@ def clean():
 
 def buildHelp():
     copytree(HELPSRC, HELPOUT)
+
+def concat(opFile, files):
+    for i, f in enumerate(files):
+        if i == 0:
+            copy(f, opFile)
+        else:
+            copyappend(opFile, f)
     
 def buildImages():
     copytree(IMGSRC, IMGOUT)
@@ -57,23 +64,31 @@ def buildCss():
 def buildJs():
     os.makedirs(JSOUT)
     
-    copy(os.path.join(JSLIB, 'jquery-1.6.4.js'),      os.path.join(JSOUT, 'jquery.js'))
-    copy(os.path.join(JSLIB, 'jquery.maphilight.js'), JSOUT)
-    copy(os.path.join(JSLIB, 'wz_jsgraphics.js'),     JSOUT)
+    concat(os.path.join(JSOUT, 'ftb-predom.js'),
+           [ os.path.join(JSSRC, 'iframe_resizer.js'),
+             os.path.join(JSSRC, 'ftb-predom.js'),
+           ])
     
-    ftb_pre = os.path.join(JSOUT, 'ftb-predom.js')
-    copy(               os.path.join(JSSRC, 'iframe_resizer.js'), ftb_pre)
-    copyappend(ftb_pre, os.path.join(JSSRC, 'ftb-predom.js'))
-    
-    ftb_post = os.path.join(JSOUT, 'ftb-postdom.js')
-    copy(                 os.path.join(JSLIB, 'jquery-1.6.4.js'), ftb_post) # for picbox
-    copyappend(ftb_post, os.path.join(PICBOX,'js', 'picbox.js'))
-    copyappend(ftb_post, os.path.join(JSSRC, 'ftb-encrypt.js'))
-    copyappend(ftb_post, os.path.join(JSSRC, 'iframe_resizer.js'))
-    copyappend(ftb_post, os.path.join(JSSRC, 'ftb-postdom.js'))
+    concat(os.path.join(JSOUT, 'ftb-postdom.js'),
+           [ os.path.join(JSLIB, 'jquery-1.6.4.js'), # for picbox
+             os.path.join(PICBOX,'js', 'picbox.js'),
+             os.path.join(JSSRC, 'ftb-encrypt.js'),
+             #os.path.join(JSSRC, 'iframe_resizer.js'),  # in predom
+             os.path.join(JSSRC, 'ftb-common.js'),
+             os.path.join(JSSRC, 'ftb-postdom.js'),
+           ])
      
     copy(os.path.join(JSSRC, 'search.js'),            JSOUT)
-    copy(os.path.join(JSSRC, 'treegraph_hilight.js'), JSOUT)
+
+    concat(os.path.join(JSOUT, 'ftb-tree-postdom.js'),
+           [ os.path.join(JSLIB, 'jquery-1.6.4.js'),
+             os.path.join(JSLIB, 'jquery.maphilight.js'),
+             os.path.join(JSLIB, 'wz_jsgraphics.js'),
+             os.path.join(JSSRC, 'treegraph_hilight.js'),
+             os.path.join(JSSRC, 'ftb-common.js'),
+             os.path.join(JSSRC, 'ftb-encrypt.js'),
+             os.path.join(JSSRC, 'ftb-tree-postdom.js'),
+           ])
 
 def build():
     clean()
