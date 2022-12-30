@@ -245,20 +245,20 @@ class LinkAnalyser:
         if len(resolved) > 0:
             fs.write('# The following links have been repaired\n')
             for lnk in resolved:
-                fs.write("Auto(r'%s',\n" % (lnk.link))
-                fs.write("     r'%s',\n" % (lnk.linkTgt))
-                fs.write("     r'%s',\n" % (lnk.revisedLinkTgt))
-                fs.write("     '%s')\n" % (lnk.status))
+                fs.write("Auto(r\"%s\",\n" % (lnk.link))
+                fs.write("     r\"%s\",\n" % (lnk.linkTgt))
+                fs.write("     r\"%s\",\n" % (lnk.revisedLinkTgt))
+                fs.write("     \"%s\")\n" % (lnk.status))
             fs.write('\n\n')
             
         if len(unresolved) > 0:
             fs.write('# It has not been possible to repair the following links.\n')
             fs.write('# (partial fixes may have been applied)\n')
             for lnk in unresolved:
-                fs.write("Man(r'%s',\n" % (lnk.link))
-                fs.write("    r'%s',\n" % (lnk.linkTgt))
-                fs.write("    r'%s',\n" % (lnk.revisedLinkTgt))
-                fs.write("    '%s')\n" % (lnk.status))
+                fs.write("Man(r\"%s\",\n" % (lnk.link))
+                fs.write("    r\"%s\",\n" % (lnk.linkTgt))
+                fs.write("    r\"%s\",\n" % (lnk.revisedLinkTgt))
+                fs.write("    \"%s\")\n" % (lnk.status))
             fs.write('\n\n')
             
         if len(backlink) > 0:

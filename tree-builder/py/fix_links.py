@@ -21,7 +21,9 @@ class Fixer:
         pass
     
     def Man(self, link, link_origTgt, link_revisedTgt, status):
-        pass
+        if link_revisedTgt is not None: # user has entered the new path
+            mklnk = getLinkMaker(link)
+            makelink_withbck(link_revisedTgt, link, mklnk, dryrun=self.dryrun)
         
     def Auto(self, link, link_origTgt, link_revisedTgt, status):
         mklnk = getLinkMaker(link)
