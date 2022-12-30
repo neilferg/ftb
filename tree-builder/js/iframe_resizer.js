@@ -68,6 +68,8 @@
 
       console.log(document.URL+": msg rx: size: h="+child_height+" w="+child_width+": setting iframe");
 
+      child_height += 10;
+
       let iframe = document.getElementById("child_iframe")
       if (iframe) {
           iframe.height = child_height;
