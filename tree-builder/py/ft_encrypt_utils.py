@@ -61,6 +61,7 @@ def encryptHtmlDOM(doc, passphrase):
     ct_hex = binascii.b2a_hex(ct).decode("utf8")
     
     content_div = lxml.etree.Element("div")
+    content_div.set("hidden", '')
     content_div.set("id", 'encrypted_content')
     content_div.text = iv_hex+'-'+ct_hex
     doc.body.append(content_div)

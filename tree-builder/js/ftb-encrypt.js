@@ -160,6 +160,8 @@
         title.innerHTML = real_title.innerHTML;
         document.head.appendChild(title);
       }
+
+      content.removeAttribute("hidden"); 
     } catch (e) {
       document.body.innerHTML = '<br><br><div style="background-color:#ff0000; width:35%; margin: auto; border: 3px solid #000000;" align="center"><b>The passphrase is incorrect.<br>Please refresh this page and try again.</b></div>';
       clearKey();
