@@ -376,7 +376,7 @@ class MakeSearch:
     
                 path = path[len(self.pf.root)+1:]
                 if obsfuc:
-                    url = os.path.join(p.surname(), p.getIdStr(), PERSON_IDX)
+                    url = os.path.join(str(self.pf.getClanId(p.surname())), p.getIdStr(), PERSON_IDX)
                 else:
                     url = os.path.join(path, PERSON_IDX)
                 url = fwdslash(url)

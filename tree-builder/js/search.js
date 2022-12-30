@@ -1,4 +1,6 @@
 // Define global variables
+var profiles = null;
+
 var F_URL = 0;
 var F_TITLE = 1;
 var F_TEXT = 2;
@@ -19,7 +21,20 @@ function getTreeRoot() {
     return getProjRoot() + "/tree";
 }
 
-function doSearchBtn() {
+async function doSearchBtn() {
+    if (profiles === null) {
+        let lookupTable = getTreeRoot() +'/searchRecs.js';
+        let encrypted_content = document.getElementById("encrypted_content");
+        if (encrypted_content) {
+            lookupTable += '.json';
+            let key_hex = await getKey_hex();
+            let b64url = await fetchAndDecryptJSONPFile(lookupTable, key_hex)
+            await loadJSScript(b64url);
+        } else {
+            await loadJSScript(lookupTable);
+        }
+    }
+
     var tb = document.getElementById("search-entry");
     searchText = tb.value.trim();
     tb.value = "";
@@ -98,4 +113,6 @@ function displayResults() {
         '</TD>\n</TR>\n</TABLE></P>\n';
 
     docObj.innerHTML = resHtml;
+
+    ftb_registerLinkHandlers(document.getElementsByTagName('a'));
 }

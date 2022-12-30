@@ -49,3 +49,13 @@ function ftb_registerLinkHandlers(href_elements) {
     }
 }
 
+function loadJSScript(url) {
+  return new Promise((resolve) => {
+    let script_ele = document.createElement('script');
+    script_ele.src = url;
+    script_ele.onload = function() { resolve(); };
+    document.head.appendChild(script_ele);
+    document.head.removeChild(script_ele);
+  });
+}
+
