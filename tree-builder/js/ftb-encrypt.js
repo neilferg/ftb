@@ -128,7 +128,7 @@
   // --------------------------------------------------------------------------
 
   function promptForPassphrase() {
-    return window.prompt("Enter your password");
+    return window.prompt("Enter the passphrase");
   }
 
   async function ftb_decryptDocument(key_hex, content) {
@@ -161,7 +161,7 @@
         document.head.appendChild(title);
       }
     } catch (e) {
-      document.body.innerHTML = "*** Decryption error ***";
+      document.body.innerHTML = '<br><br><div style="background-color:#ff0000; width:35%; margin: auto; border: 3px solid #000000;" align="center"><b>The passphrase is incorrect.<br>Please refresh this page and try again.</b></div>';
       clearKey();
     }
   }
