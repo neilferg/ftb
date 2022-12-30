@@ -6,6 +6,7 @@ import shutil
 import os.path
 import lxml.html
 import urllib
+import base64
 from os.path import relpath
 from subprocess import check_call
 from ft_encrypt_utils import encryptBinary, encryptHtmlDOM
@@ -63,10 +64,10 @@ class Exporter:
         encryptBinary(indexFile, indexFile+'.json', self.PASSPHRASE)
         os.remove(indexFile)
         
-        photo_albums = os.path.join(self.srcTreeRoot, "photo_albums")
-        if os.path.isdir(photo_albums):  
-            self.exportDir(photo_albums,
-                           os.path.join(self.expTreeRoot, os.path.basename(photo_albums)))
+        other = os.path.join(self.srcTreeRoot, "other")
+        if os.path.isdir(other):  
+            self.exportDir(other,
+                           os.path.join(self.expTreeRoot, os.path.basename(other)))
         
     def exportTrees(self):
         self.copyFile(os.path.join(self.srcTreeRoot, HTML_IDX),
@@ -89,7 +90,9 @@ class Exporter:
         for root, dirs, files in os.walk(srcPath):
             skip = []
             for d in dirs:
-                if isPerson(d):
+                # nested people are covered elsewhere
+                # 'thumbs' will be converted to base64 & embedded
+                if isPerson(d) or (d == 'thumbs'):
                     skip.append(d)
                     continue
                 
@@ -136,34 +139,48 @@ class Exporter:
         for el, attrib, lnk, pos in doc.iterlinks():
             lnk = urllib.parse.urlsplit(lnk)
             if (lnk.scheme == "file" or len(lnk.scheme) == 0) and len(lnk.path) > 0:
-                path = urllib.parse.unquote(lnk.path)
-                if path[0] == '/': # absolute
-                    path = path[1:]
+                srcPath = urllib.parse.unquote(lnk.path)
+                if srcPath[0] == '/': # absolute
+                    srcPath = srcPath[1:]
                 else: # relative
-                    path = os.path.join(os.path.dirname(src), path)
-                path = os.path.normpath(path)
+                    srcPath = os.path.join(os.path.dirname(src), srcPath)
+                srcPath = os.path.normpath(srcPath)
                 
-                pPathItem = self.splitPersonPath(path)
+                # Unless the file is under the '/dist/' dir it will be encrypted
+                fileWillBeEncrypted = (not srcPath.startswith(os.path.join(self.srcInstallRoot,'ftb','dist')))
+                ext = os.path.splitext(srcPath)[1]
+                fileWillBeEncrypted = fileWillBeEncrypted and (not ext in ['.css', '.htm', '.html', '.js'])
+ 
+                pPathItem = self.splitPersonPath(srcPath)
                 if pPathItem is not None:
+                    # a person path: these get flattened to CLAN/personId/
                     p, pathSeg = pPathItem
                     if isinstance(p, Person):
-                        path = os.path.join(self.expTreeRoot, str(self.pf.getClanId(p.surname())), p.getIdStr())
+                        expPath = os.path.join(self.expTreeRoot, str(self.pf.getClanId(p.surname())), p.getIdStr())
                     else: # clan
-                        path = os.path.join(self.expTreeRoot, p)
+                        expPath = os.path.join(self.expTreeRoot, p)
                         
-                    path = os.path.join(path, pathSeg)
+                    expPath = os.path.join(expPath, pathSeg)
                 else:
-                    path = os.path.join(self.expInstallRoot, path[len(self.srcInstallRoot) + 1:])
+                    expPath = os.path.join(self.expInstallRoot, srcPath[len(self.srcInstallRoot) + 1:])
+                
+                if (el.tag == 'img') and fileWillBeEncrypted:
+                    # Hopefully this is just a small thumb file. We convert it to base64 and embed it
+                    with open(srcPath, 'rb') as fs:
+                        imgData = fs.read()
+                    ext = os.path.splitext(srcPath)[1]
+                    ext = ext[1:]
+                
+                    lnk = "data:image/"+ext+";base64,"
+                    lnk += base64.b64encode(imgData).decode("utf8")
+                else:             
+                    expPath = fwdslash(relpath(expPath, os.path.dirname(dst)))
+                            
+                    if fileWillBeEncrypted:
+                        expPath += '.json'
                     
-                path = fwdslash(relpath(path, os.path.dirname(dst)))
-                
-                # Non-html files that are under the tree will be encrypted as jsonp
-                ext = os.path.splitext(path)[1]
-                if pPathItem and (not ext in ['.css', '.htm', '.html', '.js']):
-                    path += '.json'
-                
-                lnk = urllib.parse.urlunparse( ('', '', urllib.parse.quote(path), '', lnk.query, lnk.fragment) )
-    
+                    lnk = urllib.parse.urlunparse( ('', '', urllib.parse.quote(expPath), '', lnk.query, lnk.fragment) )
+        
                 el.attrib[attrib] = lnk
 
         encryptHtmlDOM(doc, self.PASSPHRASE)
