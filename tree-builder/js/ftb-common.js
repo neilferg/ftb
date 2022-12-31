@@ -24,16 +24,16 @@ async function ftb_displayImage_impl(imgURL, key_hex) {
 }
 
 function ftb_linkHandler_cb(e) {
-    if (e.target.href.match('\.(jpg|png)')) {
-        ftb_displayImage(this.href);
+    if (e.currentTarget.href.match('\.(jpg|png|gif)')) {
+        ftb_displayImage(e.currentTarget.href);
     } else {
-        let lnk = e.target.href;
+        let lnk = e.currentTarget.href;
         if (gkey_hex) {
           let url = new URL(lnk);
           url.search = '?ftb_key='+gkey_hex;
           lnk = url.toString();
         }
-        if (e.target.target && (e.target.target === '_top')) {
+        if (e.currentTarget.target && (e.currentTarget.target === '_top')) {
           top.location.href = lnk;
         } else {
           window.location = lnk;
