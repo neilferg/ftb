@@ -23,29 +23,35 @@ async function ftb_displayImage_impl(imgURL, key_hex) {
     $.picbox(imgURL);
 }
 
+function ftb_linkHandler_cb(e) {
+    if (e.target.href.match('\.(jpg|png)')) {
+        ftb_displayImage(this.href);
+    } else {
+        let lnk = e.target.href;
+        if (gkey_hex) {
+          let url = new URL(lnk);
+          url.search = '?ftb_key='+gkey_hex;
+          lnk = url.toString();
+        }
+        if (e.target.target && (e.target.target === '_top')) {
+          top.location.href = lnk;
+        } else {
+          window.location = lnk;
+        }
+    }
+
+    return false;
+}
+
 function ftb_registerLinkHandlers(href_elements) {
     console.log(document.URL+": registering "+href_elements.length+" links");
 
     for(let i = 0, len = href_elements.length; i < len; i++) {
-        href_elements[i].onclick = function () {
-            if (this.href.match('\.(jpg|png)')) {
-                ftb_displayImage(this.href);
-            } else {
-                let lnk = this.href;
-                if (gkey_hex) {
-                  let url = new URL(lnk);
-                  url.search = '?ftb_key='+gkey_hex;
-                  lnk = url.toString();
-                }
-                if (this.target && (this.target === '_top')) {
-                  top.location.href = lnk;
-                } else {
-                  window.location = lnk;
-                }
-            }
-
-            return false;
+        if (href_elements[i].id == 'pbCloseBtn') { // picbox: leave alone (nasty hack)
+            continue;
         }
+
+        href_elements[i].onclick = ftb_linkHandler_cb;
     }
 }
 
