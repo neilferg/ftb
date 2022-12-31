@@ -7,7 +7,7 @@ Unicode True
 !define PRODUCT_PUBLISHER "Bob Bampot"
 !define PRODUCT_INSTALLER_NAME "FT-installer.exe"
 
-
+BrandingText " "
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
