@@ -64,8 +64,9 @@
       let script_ele = document.createElement('script');
       script_ele.src = jsonpFile;
       script_ele.onload = function() {
-          let i = script_ele.src.lastIndexOf("/"); // NF_DEBUG: TODO PUT FULL PATH W.R.T TREE ROOT
-          let key = script_ele.src.substring(i+1);
+          let url = decodeURI(jsonpFile);
+          let i = url.lastIndexOf("/"); // NF_DEBUG: TODO PUT FULL PATH W.R.T TREE ROOT
+          let key = url.substring(i+1);
           let obj = gJSONP_objs.get(key);
           resolve(obj);
           gJSONP_objs.delete(key);
