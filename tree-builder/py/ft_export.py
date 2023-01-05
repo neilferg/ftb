@@ -1,7 +1,7 @@
-from ft_people import PersonFactory, Person
+from ft_people import PersonFactory
 from ft_build import MakeSearch, MakeWeb
 from osutils import fwdslash, islink, rm_rf
-from ft_utils import HTML_IDX, MOTW, isPerson, TREE_NODE
+from ft_utils import HTML_IDX, MOTW, isPerson, TREE_NODE, PERSON_IDX_, isClan
 import shutil
 import os.path
 import lxml.html
@@ -25,6 +25,7 @@ class Exporter:
     def export(self, expInstallRoot):
         self.expInstallRoot = os.path.abspath(expInstallRoot)
         self.expTreeRoot = os.path.join(expInstallRoot, TREE_NODE)
+        self.remapper = FileRemapper(self.pf, self.srcInstallRoot, self.expInstallRoot)
         
         rm_rf(self.expInstallRoot)
         os.makedirs(self.expTreeRoot)
@@ -117,9 +118,11 @@ class Exporter:
                 dummy, ext = os.path.splitext(f)
                 if ext in ['.tif']:
                     continue
+                
+                dst, encrypt = self.remapper.getRemappedName(src)
                  
-                dst = src[len(srcPath) + 1:]
-                dst = os.path.join(expPath, dst)
+                #dst = src[len(srcPath) + 1:]
+                #dst = os.path.join(expPath, dst)
                 
                 print("  ", src, "->", dst)
                 self.copyFile(src, dst)
@@ -141,41 +144,26 @@ class Exporter:
             if (lnk.scheme == "file" or len(lnk.scheme) == 0) and len(lnk.path) > 0:
                 srcPath = urllib.parse.unquote(lnk.path)
                 if srcPath[0] == '/': # absolute
-                    srcPath = srcPath[1:]
+                    pass #srcPath = srcPath[1:] # why are we removing this?
                 else: # relative
                     srcPath = os.path.join(os.path.dirname(src), srcPath)
                 srcPath = os.path.normpath(srcPath)
                 
-                # Unless the file is under the '/dist/' dir it will be encrypted
-                fileWillBeEncrypted = (not srcPath.startswith(os.path.join(self.srcInstallRoot,'ftb','dist')))
+                expPath, fileWillBeEncrypted = self.remapper.getRemappedName(srcPath)
                 ext = os.path.splitext(srcPath)[1]
-                fileWillBeEncrypted = fileWillBeEncrypted and (not ext in ['.css', '.htm', '.html', '.js'])
- 
-                pPathItem = self.splitPersonPath(srcPath)
-                if pPathItem is not None:
-                    # a person path: these get flattened to CLAN/personId/
-                    p, pathSeg = pPathItem
-                    if isinstance(p, Person):
-                        expPath = os.path.join(self.expTreeRoot, str(self.pf.getClanId(p.surname())), p.getIdStr())
-                    else: # clan
-                        expPath = os.path.join(self.expTreeRoot, p)
-                        
-                    expPath = os.path.join(expPath, pathSeg)
-                else:
-                    expPath = os.path.join(self.expInstallRoot, srcPath[len(self.srcInstallRoot) + 1:])
                 
                 if (el.tag == 'img') and fileWillBeEncrypted:
                     # Hopefully this is just a small thumb file. We convert it to base64 and embed it
                     with open(srcPath, 'rb') as fs:
                         imgData = fs.read()
-                    ext = os.path.splitext(srcPath)[1]
+                    
                     ext = ext[1:]
-                
                     lnk = "data:image/"+ext+";base64,"
                     lnk += base64.b64encode(imgData).decode("utf8")
                 else:             
                     expPath = fwdslash(relpath(expPath, os.path.dirname(dst)))
                             
+                    fileWillBeEncrypted = fileWillBeEncrypted and (not ext in ['.htm', '.html'])
                     if fileWillBeEncrypted:
                         expPath += '.json'
                     
@@ -189,24 +177,6 @@ class Exporter:
             fs.write(MOTW.encode("utf8"))
             fs.write(lxml.html.tostring(doc, doctype='<!DOCTYPE HTML>'))
         
-    def splitPersonPath(self, path):
-        splitpath = path.split(os.sep)
-        plen = len(splitpath)
-        while (plen > 0):
-            tryPerson = os.sep.join(splitpath)
-            p = self.pf.people.get(tryPerson)
-            if p is not None:
-                return (p, path[len(tryPerson) + 1:])
-            else:
-                clan = splitpath[plen-1]
-                clanid = self.pf.clans.get(clan) 
-                if clanid is not None:
-                    return (str(clanid), path[len(tryPerson) + 1:])
-                
-            del splitpath[plen-1]
-            plen = len(splitpath)
-        return None
-    
     def buildWin32Installer(self):
         INSTALLER_NSI = 'nsis-installer.nsi'
         
@@ -227,4 +197,95 @@ class Exporter:
         installerAutogenExe = os.path.join(self.expInstallRoot, PRODUCT_INSTALLER_NAME)
         installerExe = os.path.join(self.expInstallRoot, "Family-tree-installer-v%s.exe" % (version))
         os.rename(installerAutogenExe, installerExe)
+
         
+class FileRemapper:
+    TREEROOT_FILES = ['families.html', 'help.htm', 'index.html', 'searchRecs.js']
+    
+    def __init__(self, pf, srcInstallRoot, expInstallRoot):
+        self.pf = pf
+        self.srcInstallRoot = srcInstallRoot
+        self.srcInstallRoot_len = len(self.srcInstallRoot)
+        self.srcTreeRoot = os.path.join(self.srcInstallRoot, TREE_NODE)
+        self.srcTreeRoot_len = len(self.srcTreeRoot)
+        
+        self.expInstallRoot = expInstallRoot
+        
+        self.lookup = {}
+        self.fileId = 1000
+          
+    def tryExtractPerson(self, srcPath):
+        srcPathBase = srcPath[self.srcTreeRoot_len + 1:]
+        srcPathBase_split = srcPathBase.split(os.sep)
+        
+        clan = srcPathBase_split[0]
+        if not isClan(clan):
+            return (None, None)
+  
+        plen = len(srcPathBase_split)
+        while (plen > 0):
+            tryPerson = os.path.join(self.srcTreeRoot, *srcPathBase_split)
+            p = self.pf.people.get(tryPerson)
+            if p is not None:
+                return (clan, p)
+                
+            del srcPathBase_split[plen-1]
+            plen = len(srcPathBase_split)
+            
+        return (clan, None)
+    
+    def getFileId(self, srcPath):
+        fid = self.lookup.get(srcPath, None)
+        if fid is None:
+            fid = str(self.fileId)
+            self.fileId += 1
+            
+            ext = os.path.splitext(srcPath)[1]
+            fid += ext
+            
+            self.lookup[srcPath] = fid
+        return fid
+                   
+    # TODO: 3rd party html documents may contain link references that we don't have locally
+    def getRemappedName(self, srcPath):        
+        encrypt = True
+        rename = True
+        
+        if srcPath.startswith(self.srcTreeRoot):
+            bn = os.path.basename(srcPath)
+            clan, person = self.tryExtractPerson(srcPath)
+            if person:
+                expPath = os.path.join(self.expInstallRoot, TREE_NODE, str(self.pf.getClanId(clan)), person.getIdStr())
+                rename = not (bn in [PERSON_IDX_])
+            elif clan: # _clanTree.htm
+                expPath = os.path.join(self.expInstallRoot, TREE_NODE, str(self.pf.getClanId(clan)))
+                rename = not (bn in ["_clanTree.htm"])
+            else:
+                srcPathBase = srcPath[self.srcTreeRoot_len + 1:]
+                
+                if srcPathBase in self.TREEROOT_FILES: # @ tree root: keep there
+                    rename = False
+                    expPath = os.path.join(self.expInstallRoot, TREE_NODE)
+                else: # other directories: flatten to other
+                    expPath = os.path.join(self.expInstallRoot, TREE_NODE, 'other')
+                
+            if rename:
+                expPath = os.path.join(expPath, self.getFileId(srcPath))
+            else:
+                expPath = os.path.join(expPath, bn)
+        else: # Non 'tree'
+            encrypt = False
+            
+            if srcPath.startswith(self.srcInstallRoot):
+                # Just rebase
+                srcPathBase = srcPath[self.srcInstallRoot_len + 1:]
+                expPath = os.path.join(self.expInstallRoot, srcPathBase)
+            elif srcPath == '/opt/ftb/tree-builder/css/ftb.css':
+                # The user html files have the css hard coded to make it easier to
+                # edit them standalone
+                expPath = os.path.join(self.expInstallRoot,'ftb','dist','css','ftb.css')
+            else:
+                expPath = None
+                
+        return (expPath, encrypt)
+    
