@@ -1,7 +1,7 @@
 from ft_people import PersonFactory
 from ft_build import MakeSearch, MakeWeb
 from osutils import fwdslash, islink, rm_rf
-from ft_utils import HTML_IDX, MOTW, isPerson, TREE_NODE, PERSON_IDX_, isClan
+from ft_utils import HTML_IDX, MOTW, isPerson, TREE_NODE, PERSON_IDX, PERSON_IDX_, isClan
 import shutil
 import os.path
 import lxml.html
@@ -256,7 +256,7 @@ class FileRemapper:
             clan, person = self.tryExtractPerson(srcPath)
             if person:
                 expPath = os.path.join(self.expInstallRoot, TREE_NODE, str(self.pf.getClanId(clan)), person.getIdStr())
-                rename = not (bn in [PERSON_IDX_])
+                rename = not (bn in [PERSON_IDX, PERSON_IDX_])
             elif clan: # _clanTree.htm
                 expPath = os.path.join(self.expInstallRoot, TREE_NODE, str(self.pf.getClanId(clan)))
                 rename = not (bn in ["_clanTree.htm"])
